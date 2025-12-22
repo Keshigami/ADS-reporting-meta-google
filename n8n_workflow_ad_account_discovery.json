@@ -1,0 +1,639 @@
+{
+    "name": "Ad Account Discovery & Mapping",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "days",
+                            "triggerAtHour": 6
+                        }
+                    ]
+                }
+            },
+            "id": "daily-sync",
+            "name": "Daily Sync (6 AM)",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "sync-ad-accounts",
+                "options": {}
+            },
+            "id": "manual-trigger",
+            "name": "Manual Sync Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "url": "https://graph.facebook.com/v18.0/me/adaccounts",
+                "authentication": "oAuth2",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "fields",
+                            "value": "id,name,account_status,amount_spent,currency,business_name"
+                        },
+                        {
+                            "name": "limit",
+                            "value": "100"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "fetch-meta-accounts",
+            "name": "Fetch All Meta Ad Accounts",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                480,
+                300
+            ],
+            "credentials": {
+                "facebookGraphOAuth2Api": {
+                    "id": "META_OAUTH_CRED_ID",
+                    "name": "Meta Business OAuth2"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://googleads.googleapis.com/v14/customers:listAccessibleCustomers",
+                "authentication": "oAuth2",
+                "options": {}
+            },
+            "id": "fetch-google-customers",
+            "name": "Fetch Google Ads Customers",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                480,
+                480
+            ],
+            "credentials": {
+                "googleAdsOAuth2Api": {
+                    "id": "GOOGLE_ADS_OAUTH_CRED_ID",
+                    "name": "Google Ads OAuth2"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// Process Meta ad accounts\nconst metaAccounts = $input.all().find(i => i.json.data)?.json.data || [];\n\nconst processedMeta = metaAccounts.map(acc => ({\n  platform: 'meta',\n  account_id: acc.id, // format: act_XXXXXXXXX\n  account_name: acc.name,\n  business_name: acc.business_name || '',\n  status: acc.account_status === 1 ? 'Active' : 'Inactive',\n  currency: acc.currency,\n  total_spent: parseFloat(acc.amount_spent) / 100 || 0,\n  // Try to extract client name from account name\n  // Common patterns: \"ClientName - Campaigns\", \"ClientName\", \"ClientName Ads\"\n  inferred_client: extractClientName(acc.name)\n}));\n\nfunction extractClientName(accountName) {\n  if (!accountName) return null;\n  \n  // Remove common suffixes\n  let cleaned = accountName\n    .replace(/\\s*[-–]\\s*(Ads|Campaigns|Marketing|FB|Meta|Google|Paid|Media).*$/i, '')\n    .replace(/\\s*(Ads|Account|Ad Account)$/i, '')\n    .trim();\n  \n  return cleaned || null;\n}\n\nreturn processedMeta.map(acc => ({ json: acc }));"
+            },
+            "id": "process-meta",
+            "name": "Process Meta Accounts",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                700,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Process Google Ads customers\nconst googleResponse = $input.first().json;\nconst customerResourceNames = googleResponse.resourceNames || [];\n\n// For each customer, we need to fetch details\n// This returns just the IDs - we'll need another call for names\nconst processedGoogle = customerResourceNames.map(resourceName => {\n  // Format: customers/1234567890\n  const customerId = resourceName.replace('customers/', '');\n  \n  return {\n    platform: 'google',\n    account_id: customerId,\n    resource_name: resourceName,\n    status: 'Unknown', // Will update in next step\n    inferred_client: null // Will try to match later\n  };\n});\n\nreturn processedGoogle.map(acc => ({ json: acc }));"
+            },
+            "id": "process-google-ids",
+            "name": "Process Google Customer IDs",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                700,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop-google",
+            "name": "Loop Google Customers",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                900,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://googleads.googleapis.com/v14/customers/{{ $json.account_id }}/googleAds:searchStream",
+                "authentication": "oAuth2",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "value": "SELECT customer.id, customer.descriptive_name, customer.currency_code, customer.status FROM customer LIMIT 1"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "fetch-google-details",
+            "name": "Fetch Google Customer Details",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1100,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Add details to Google account\nconst details = $input.first().json.results?.[0]?.customer || {};\nconst original = $('Loop Google Customers').first().json;\n\nfunction extractClientName(accountName) {\n  if (!accountName) return null;\n  let cleaned = accountName\n    .replace(/\\s*[-–]\\s*(Ads|Campaigns|Marketing|FB|Meta|Google|Paid|Media).*$/i, '')\n    .replace(/\\s*(Ads|Account|Ad Account)$/i, '')\n    .trim();\n  return cleaned || null;\n}\n\nreturn [{\n  json: {\n    platform: 'google',\n    account_id: original.account_id,\n    account_name: details.descriptiveName || `Account ${original.account_id}`,\n    business_name: '',\n    status: details.status === 'ENABLED' ? 'Active' : 'Inactive',\n    currency: details.currencyCode,\n    total_spent: 0, // Would need separate query\n    inferred_client: extractClientName(details.descriptiveName)\n  }\n}];"
+            },
+            "id": "enrich-google",
+            "name": "Enrich Google Details",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1300,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "combinationMode": "mergeByPosition",
+                "options": {}
+            },
+            "id": "combine-all",
+            "name": "Combine All Accounts",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 2.1,
+            "position": [
+                1500,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "databasePage",
+                "operation": "getAll",
+                "databaseId": "={{ $env.NOTION_CLIENTS_DB_ID }}",
+                "returnAll": true
+            },
+            "id": "get-clients",
+            "name": "Get Existing Clients",
+            "type": "n8n-nodes-base.notion",
+            "typeVersion": 2.1,
+            "position": [
+                1700,
+                280
+            ],
+            "credentials": {
+                "notionApi": {
+                    "id": "NOTION_CRED_ID",
+                    "name": "Notion API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// Match ad accounts to clients\nconst adAccounts = $('Combine All Accounts').all().map(i => i.json);\nconst clients = $('Get Existing Clients').all().map(i => i.json);\n\nfunction normalizeForMatching(str) {\n  return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');\n}\n\nconst matchedAccounts = adAccounts.map(acc => {\n  // Try to find matching client by name\n  const inferredNorm = normalizeForMatching(acc.inferred_client);\n  \n  let matchedClient = null;\n  let matchConfidence = 'none';\n  \n  for (const client of clients) {\n    const clientName = client.properties?.Name?.title?.[0]?.plain_text || '';\n    const clientNorm = normalizeForMatching(clientName);\n    const clientCode = client.properties?.['Client Code']?.rich_text?.[0]?.plain_text || '';\n    \n    // Exact match on inferred name\n    if (inferredNorm && inferredNorm === clientNorm) {\n      matchedClient = { id: client.id, name: clientName };\n      matchConfidence = 'high';\n      break;\n    }\n    \n    // Partial match (client name contained in account name)\n    if (inferredNorm && clientNorm && inferredNorm.includes(clientNorm)) {\n      matchedClient = { id: client.id, name: clientName };\n      matchConfidence = 'medium';\n      // Don't break - keep looking for exact match\n    }\n    \n    // Check if client code appears in account name\n    if (clientCode && acc.account_name?.toLowerCase().includes(clientCode.toLowerCase())) {\n      matchedClient = { id: client.id, name: clientName };\n      matchConfidence = 'high';\n      break;\n    }\n  }\n  \n  return {\n    ...acc,\n    matched_client_id: matchedClient?.id || null,\n    matched_client_name: matchedClient?.name || null,\n    match_confidence: matchConfidence,\n    needs_review: matchConfidence !== 'high'\n  };\n});\n\nreturn matchedAccounts.map(acc => ({ json: acc }));"
+            },
+            "id": "match-clients",
+            "name": "Auto-Match to Clients",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1900,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "databasePage",
+                "operation": "getAll",
+                "databaseId": "={{ $env.NOTION_AD_ACCOUNTS_DB_ID }}",
+                "returnAll": true
+            },
+            "id": "get-existing-accounts",
+            "name": "Get Existing Ad Accounts DB",
+            "type": "n8n-nodes-base.notion",
+            "typeVersion": 2.1,
+            "position": [
+                2100,
+                280
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Determine which accounts need to be created vs updated\nconst newAccounts = $('Auto-Match to Clients').all().map(i => i.json);\nconst existingAccounts = $('Get Existing Ad Accounts DB').all().map(i => ({\n  notion_page_id: i.json.id,\n  account_id: i.json.properties?.['Account ID']?.rich_text?.[0]?.plain_text,\n  platform: i.json.properties?.['Platform']?.select?.name\n}));\n\nconst toCreate = [];\nconst toUpdate = [];\n\nnewAccounts.forEach(acc => {\n  const existing = existingAccounts.find(e => \n    e.account_id === acc.account_id && e.platform === acc.platform\n  );\n  \n  if (existing) {\n    toUpdate.push({ ...acc, notion_page_id: existing.notion_page_id });\n  } else {\n    toCreate.push(acc);\n  }\n});\n\nreturn [\n  { json: { action: 'summary', total: newAccounts.length, to_create: toCreate.length, to_update: toUpdate.length } },\n  ...toCreate.map(acc => ({ json: { action: 'create', ...acc } })),\n  ...toUpdate.map(acc => ({ json: { action: 'update', ...acc } }))\n];"
+            },
+            "id": "diff-accounts",
+            "name": "Diff: Create vs Update",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2300,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json.action }}",
+                            "value2": "create"
+                        }
+                    ]
+                }
+            },
+            "id": "if-create",
+            "name": "If Create",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                2500,
+                280
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "databasePage",
+                "operation": "create",
+                "databaseId": "={{ $env.NOTION_AD_ACCOUNTS_DB_ID }}",
+                "propertiesUi": {
+                    "propertyValues": [
+                        {
+                            "key": "Name",
+                            "title": "{{ $json.account_name }}"
+                        },
+                        {
+                            "key": "Account ID",
+                            "richText": "{{ $json.account_id }}"
+                        },
+                        {
+                            "key": "Platform",
+                            "select": "{{ $json.platform === 'meta' ? 'Meta' : 'Google' }}"
+                        },
+                        {
+                            "key": "Status",
+                            "select": "{{ $json.status }}"
+                        },
+                        {
+                            "key": "Client",
+                            "relation": "{{ $json.matched_client_id ? [$json.matched_client_id] : [] }}"
+                        },
+                        {
+                            "key": "Match Confidence",
+                            "select": "{{ $json.match_confidence }}"
+                        },
+                        {
+                            "key": "Needs Review",
+                            "checkbox": "{{ $json.needs_review }}"
+                        },
+                        {
+                            "key": "Inferred Client",
+                            "richText": "{{ $json.inferred_client || '' }}"
+                        },
+                        {
+                            "key": "Last Synced",
+                            "date": "{{ $now.toISO() }}"
+                        }
+                    ]
+                }
+            },
+            "id": "create-notion-account",
+            "name": "Create Ad Account in Notion",
+            "type": "n8n-nodes-base.notion",
+            "typeVersion": 2.1,
+            "position": [
+                2700,
+                180
+            ]
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "string": [
+                        {
+                            "value1": "={{ $json.action }}",
+                            "value2": "update"
+                        }
+                    ]
+                }
+            },
+            "id": "if-update",
+            "name": "If Update",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                2500,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "databasePage",
+                "operation": "update",
+                "pageId": "={{ $json.notion_page_id }}",
+                "propertiesUi": {
+                    "propertyValues": [
+                        {
+                            "key": "Status",
+                            "select": "{{ $json.status }}"
+                        },
+                        {
+                            "key": "Last Synced",
+                            "date": "{{ $now.toISO() }}"
+                        }
+                    ]
+                }
+            },
+            "id": "update-notion-account",
+            "name": "Update Ad Account in Notion",
+            "type": "n8n-nodes-base.notion",
+            "typeVersion": 2.1,
+            "position": [
+                2700,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Generate summary report\nconst all = $input.all().map(i => i.json);\nconst created = all.filter(a => a.action === 'create').length;\nconst updated = all.filter(a => a.action === 'update').length;\nconst needsReview = all.filter(a => a.needs_review).length;\n\nreturn [{\n  json: {\n    summary: `Ad Account Sync Complete`,\n    created,\n    updated,\n    needs_review: needsReview,\n    message: `Synced ${created + updated} accounts. ${needsReview} need manual client assignment.`\n  }\n}];"
+            },
+            "id": "summary",
+            "name": "Generate Summary",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2900,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "channel": "#ads-reports",
+                "text": "🔄 *Ad Account Sync Complete*\n\n✅ Created: {{ $json.created }} new accounts\n🔄 Updated: {{ $json.updated }} existing accounts\n⚠️ Needs Review: {{ $json.needs_review }} accounts need manual client assignment\n\nCheck Notion → Ad Accounts database for details."
+            },
+            "id": "slack-notify",
+            "name": "Slack Notification",
+            "type": "n8n-nodes-base.slack",
+            "typeVersion": 2.1,
+            "position": [
+                3100,
+                380
+            ],
+            "credentials": {
+                "slackApi": {
+                    "id": "SLACK_CRED_ID",
+                    "name": "Slack API"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Daily Sync (6 AM)": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch All Meta Ad Accounts",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Google Ads Customers",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Manual Sync Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch All Meta Ad Accounts",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Fetch Google Ads Customers",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch All Meta Ad Accounts": {
+            "main": [
+                [
+                    {
+                        "node": "Process Meta Accounts",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Google Ads Customers": {
+            "main": [
+                [
+                    {
+                        "node": "Process Google Customer IDs",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Process Google Customer IDs": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Google Customers",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Google Customers": {
+            "main": [
+                [
+                    {
+                        "node": "Fetch Google Customer Details",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Fetch Google Customer Details": {
+            "main": [
+                [
+                    {
+                        "node": "Enrich Google Details",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Enrich Google Details": {
+            "main": [
+                [
+                    {
+                        "node": "Combine All Accounts",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Process Meta Accounts": {
+            "main": [
+                [
+                    {
+                        "node": "Combine All Accounts",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Combine All Accounts": {
+            "main": [
+                [
+                    {
+                        "node": "Get Existing Clients",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Existing Clients": {
+            "main": [
+                [
+                    {
+                        "node": "Auto-Match to Clients",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Auto-Match to Clients": {
+            "main": [
+                [
+                    {
+                        "node": "Get Existing Ad Accounts DB",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Existing Ad Accounts DB": {
+            "main": [
+                [
+                    {
+                        "node": "Diff: Create vs Update",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Diff: Create vs Update": {
+            "main": [
+                [
+                    {
+                        "node": "If Create",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "If Update",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "If Create": {
+            "main": [
+                [
+                    {
+                        "node": "Create Ad Account in Notion",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "If Update": {
+            "main": [
+                [
+                    {
+                        "node": "Update Ad Account in Notion",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                []
+            ]
+        },
+        "Create Ad Account in Notion": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Summary",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Ad Account in Notion": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Summary",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Summary": {
+            "main": [
+                [
+                    {
+                        "node": "Slack Notification",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    }
+}

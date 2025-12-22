@@ -116,6 +116,55 @@ For logging errors and tracking fixes.
 
 ---
 
+## Database 5: Ad Accounts (Auto-Discovered)
+
+This database is **automatically populated** by the Ad Account Discovery workflow. It syncs all Meta and Google ad accounts you have access to and tries to match them to clients.
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| Name | Title | Account name from platform |
+| Account ID | Text | `act_XXXXXXXXX` (Meta) or `1234567890` (Google) |
+| Platform | Select | `Meta`, `Google` |
+| Status | Select | `Active`, `Inactive` |
+| Client | Relation | Link to Clients database (auto-matched or manual) |
+| Match Confidence | Select | `high`, `medium`, `low`, `none` |
+| Needs Review | Checkbox | True if auto-match uncertain |
+| Inferred Client | Text | What the system guessed the client name is |
+| Currency | Text | Account currency (USD, etc.) |
+| Total Spent | Number | Lifetime spend (for reference) |
+| Last Synced | Date | When last updated by discovery workflow |
+
+### Views
+
+1. **Needs Review** - Filter: Needs Review = ✅, sorted by Last Synced
+2. **By Client** - Group by Client relation
+3. **Unassigned** - Filter: Client is empty
+4. **Meta Accounts** - Filter: Platform = Meta
+5. **Google Accounts** - Filter: Platform = Google
+6. **All Active** - Filter: Status = Active
+
+### How It Works
+
+```mermaid
+flowchart LR
+    APIS["Meta + Google APIs"] --> DISCOVER["Discovery Workflow<br/>(runs daily)"]
+    DISCOVER --> MATCH["Auto-Match by Name"]
+    MATCH --> NOTION["Ad Accounts DB"]
+    NOTION --> REVIEW["Manual Review<br/>(if needed)"]
+    REVIEW --> CLIENTS["Update Client Relations"]
+```
+
+1. **Discovery workflow** runs daily at 6 AM
+2. Pulls all ad accounts from Meta Business Manager and Google Ads MCC
+3. Tries to **auto-match** accounts to clients by name similarity
+4. Creates/updates entries in this database
+5. Flags accounts that need **manual review** (low confidence matches)
+6. Once you assign the Client relation, the weekly report workflow uses it
+
+---
+
 ## Environment Variables for n8n
 
 Set these in your n8n instance (Settings → Variables or .env file):
@@ -125,6 +174,7 @@ Set these in your n8n instance (Settings → Variables or .env file):
 NOTION_CLIENTS_DB_ID=your-clients-db-id
 NOTION_REPORTS_DB_ID=your-reports-db-id
 NOTION_AGENCY_DB_ID=your-agency-db-id
+NOTION_AD_ACCOUNTS_DB_ID=your-ad-accounts-db-id
 
 # Google Drive
 GOOGLE_DRIVE_REPORTS_FOLDER_ID=your-folder-id
@@ -143,7 +193,11 @@ SLACK_CHANNEL=#ads-reports
 - [ ] Create "Clients" database in Notion
 - [ ] Create "Client Reports" database with relation to Clients
 - [ ] Create "Agency Dashboard" database
+- [ ] Create "Ad Accounts" database with relation to Clients
 - [ ] Get database IDs from Notion URLs
 - [ ] Create Google Drive folder for reports
 - [ ] Add environment variables to n8n
 - [ ] Configure n8n credentials for: Notion, Google, Meta, GHL, Gmail, Slack
+- [ ] Import and run Ad Account Discovery workflow first
+- [ ] Review and assign any unmatched ad accounts to clients
+- [ ] Import and enable Weekly Report workflow
