@@ -38,14 +38,36 @@ This system generates **two types of weekly reports**:
 
 ## Files
 
+### Workflows (Import to n8n)
+
 | File | Purpose |
 |------|---------|
-| `n8n_workflow_weekly_ads_report.json` | **Import this into n8n** |
+| `n8n_workflow_weekly_ads_report.json` | Main weekly reporting workflow |
+| `n8n_workflow_ad_account_discovery.json` | Auto-discovers & maps ad accounts to clients |
+
+### Setup & Configuration
+
+| File | Purpose |
+|------|---------|
 | `SETUP_GUIDE.md` | Step-by-step setup instructions |
 | `notion_database_schemas.md` | Notion database property specs |
+
+### Call Tracking
+
+| File | Purpose |
+|------|---------|
+| `Call_Tracking_Options_For_Jake.md` | Decision doc: 4 options with trade-offs |
+| `Call_Tracking_Strategy.md` | Multi-channel tracking strategy |
+| `Phone_Number_Porting_Guide.md` | How to port numbers to GHL |
+
+### Reference & Planning
+
+| File | Purpose |
+|------|---------|
 | `Executive_Summary_Weekly_Ads_System.md` | Overview for decision makers |
 | `Weekly_Ads_Reporting_System_Specification.md` | Full technical spec |
 | `Budget_Stack_Free_Alternatives.md` | Cost comparison and alternatives |
+| `Conversation_Summary_Dec22.md` | Session notes and decisions |
 
 ## Stack (FREE)
 
