@@ -1,0 +1,968 @@
+{
+    "name": "Weekly Ads Report - Client + Agency",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "weeks",
+                            "triggerAtDay": [
+                                1
+                            ],
+                            "triggerAtHour": 9
+                        }
+                    ]
+                }
+            },
+            "id": "cron-trigger",
+            "name": "Weekly Monday 9AM",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "weekly-ads-report",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "On-Demand Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                240,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "combinationMode": "multiplex",
+                "options": {}
+            },
+            "id": "merge-triggers",
+            "name": "Merge Triggers",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 2.1,
+            "position": [
+                440,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "databasePage",
+                "operation": "getAll",
+                "databaseId": "={{ $env.NOTION_CLIENTS_DB_ID }}",
+                "returnAll": true,
+                "filterType": "formula",
+                "filterFormula": "{{ eq(prop('Status'), 'Active') }}"
+            },
+            "id": "get-clients",
+            "name": "Get Active Clients",
+            "type": "n8n-nodes-base.notion",
+            "typeVersion": 2.1,
+            "position": [
+                640,
+                380
+            ],
+            "credentials": {
+                "notionApi": {
+                    "id": "NOTION_CRED_ID",
+                    "name": "Notion API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "batchSize": 1,
+                "options": {}
+            },
+            "id": "loop-clients",
+            "name": "Loop Clients",
+            "type": "n8n-nodes-base.splitInBatches",
+            "typeVersion": 3,
+            "position": [
+                840,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "values": {
+                    "string": [
+                        {
+                            "name": "current_week_start",
+                            "value": "={{ $now.minus({days: 7}).startOf('day').toISODate() }}"
+                        },
+                        {
+                            "name": "current_week_end",
+                            "value": "={{ $now.minus({days: 1}).endOf('day').toISODate() }}"
+                        },
+                        {
+                            "name": "prior_week_start",
+                            "value": "={{ $now.minus({days: 14}).startOf('day').toISODate() }}"
+                        },
+                        {
+                            "name": "prior_week_end",
+                            "value": "={{ $now.minus({days: 8}).endOf('day').toISODate() }}"
+                        },
+                        {
+                            "name": "week_label",
+                            "value": "={{ $now.minus({days: 7}).toFormat('MMM d') }} - {{ $now.minus({days: 1}).toFormat('MMM d, yyyy') }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "set-dates",
+            "name": "Set Date Range",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.2,
+            "position": [
+                1040,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "adInsights",
+                "adAccountId": "={{ $json.meta_ad_account_id }}",
+                "returnAll": true,
+                "level": "campaign",
+                "fields": [
+                    "campaign_id",
+                    "campaign_name",
+                    "impressions",
+                    "clicks",
+                    "spend",
+                    "actions",
+                    "action_values",
+                    "ctr",
+                    "cpc",
+                    "cost_per_action_type"
+                ],
+                "timeRange": {
+                    "since": "={{ $json.current_week_start }}",
+                    "until": "={{ $json.current_week_end }}"
+                }
+            },
+            "id": "meta-current",
+            "name": "Meta Ads - Current Week",
+            "type": "n8n-nodes-base.facebookGraphApi",
+            "typeVersion": 1,
+            "position": [
+                1240,
+                280
+            ],
+            "credentials": {
+                "facebookGraphApi": {
+                    "id": "META_CRED_ID",
+                    "name": "Meta Business API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "adInsights",
+                "adAccountId": "={{ $json.meta_ad_account_id }}",
+                "returnAll": true,
+                "level": "campaign",
+                "fields": [
+                    "campaign_id",
+                    "campaign_name",
+                    "impressions",
+                    "clicks",
+                    "spend",
+                    "actions",
+                    "action_values",
+                    "ctr",
+                    "cpc",
+                    "cost_per_action_type"
+                ],
+                "timeRange": {
+                    "since": "={{ $json.prior_week_start }}",
+                    "until": "={{ $json.prior_week_end }}"
+                }
+            },
+            "id": "meta-prior",
+            "name": "Meta Ads - Prior Week",
+            "type": "n8n-nodes-base.facebookGraphApi",
+            "typeVersion": 1,
+            "position": [
+                1240,
+                420
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://googleads.googleapis.com/v14/customers/{{ $json.google_ads_customer_id }}/googleAds:searchStream",
+                "authentication": "oAuth2",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "value": "SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions, metrics.conversions_value, metrics.ctr, metrics.average_cpc, metrics.cost_per_conversion FROM campaign WHERE segments.date BETWEEN '{{ $json.current_week_start }}' AND '{{ $json.current_week_end }}'"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "google-current",
+            "name": "Google Ads - Current Week",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1240,
+                560
+            ],
+            "credentials": {
+                "googleAdsOAuth2Api": {
+                    "id": "GOOGLE_ADS_CRED_ID",
+                    "name": "Google Ads OAuth2"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://googleads.googleapis.com/v14/customers/{{ $json.google_ads_customer_id }}/googleAds:searchStream",
+                "authentication": "oAuth2",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "value": "SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.cost_micros, metrics.conversions, metrics.conversions_value, metrics.ctr, metrics.average_cpc, metrics.cost_per_conversion FROM campaign WHERE segments.date BETWEEN '{{ $json.prior_week_start }}' AND '{{ $json.prior_week_end }}'"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "google-prior",
+            "name": "Google Ads - Prior Week",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                1240,
+                700
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Normalize and merge all ad data\nconst metaCurrent = $input.all().find(i => i.json.source === 'meta_current')?.json.data || [];\nconst metaPrior = $input.all().find(i => i.json.source === 'meta_prior')?.json.data || [];\nconst googleCurrent = $input.all().find(i => i.json.source === 'google_current')?.json.data || [];\nconst googlePrior = $input.all().find(i => i.json.source === 'google_prior')?.json.data || [];\n\nfunction normalizeMeta(campaigns, platform = 'meta') {\n  return campaigns.map(c => ({\n    platform,\n    campaign_id: c.campaign_id,\n    campaign_name: c.campaign_name,\n    impressions: parseInt(c.impressions) || 0,\n    clicks: parseInt(c.clicks) || 0,\n    spend: parseFloat(c.spend) || 0,\n    conversions: c.actions?.find(a => a.action_type === 'lead')?.value || 0,\n    revenue: c.action_values?.find(a => a.action_type === 'purchase')?.value || 0,\n    ctr: parseFloat(c.ctr) || 0,\n    cpc: parseFloat(c.cpc) || 0,\n    cpa: parseFloat(c.cost_per_action_type?.find(a => a.action_type === 'lead')?.value) || 0\n  }));\n}\n\nfunction normalizeGoogle(campaigns, platform = 'google') {\n  return campaigns.map(c => ({\n    platform,\n    campaign_id: c.campaign?.id,\n    campaign_name: c.campaign?.name,\n    impressions: parseInt(c.metrics?.impressions) || 0,\n    clicks: parseInt(c.metrics?.clicks) || 0,\n    spend: (parseInt(c.metrics?.costMicros) || 0) / 1000000,\n    conversions: parseFloat(c.metrics?.conversions) || 0,\n    revenue: parseFloat(c.metrics?.conversionsValue) || 0,\n    ctr: parseFloat(c.metrics?.ctr) || 0,\n    cpc: (parseInt(c.metrics?.averageCpc) || 0) / 1000000,\n    cpa: (parseInt(c.metrics?.costPerConversion) || 0) / 1000000\n  }));\n}\n\nconst currentWeek = [\n  ...normalizeMeta(metaCurrent),\n  ...normalizeGoogle(googleCurrent)\n];\n\nconst priorWeek = [\n  ...normalizeMeta(metaPrior),\n  ...normalizeGoogle(googlePrior)\n];\n\nreturn [{ json: { currentWeek, priorWeek } }];"
+            },
+            "id": "normalize-data",
+            "name": "Normalize & Merge Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1480,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const { currentWeek, priorWeek } = $input.first().json;\n\n// Aggregate totals\nfunction aggregate(campaigns) {\n  return campaigns.reduce((acc, c) => ({\n    total_spend: acc.total_spend + c.spend,\n    total_conversions: acc.total_conversions + c.conversions,\n    total_revenue: acc.total_revenue + c.revenue,\n    total_clicks: acc.total_clicks + c.clicks,\n    total_impressions: acc.total_impressions + c.impressions\n  }), { total_spend: 0, total_conversions: 0, total_revenue: 0, total_clicks: 0, total_impressions: 0 });\n}\n\nconst currentTotals = aggregate(currentWeek);\nconst priorTotals = aggregate(priorWeek);\n\n// Calculate derived metrics\ncurrentTotals.roas = currentTotals.total_spend > 0 \n  ? (currentTotals.total_revenue / currentTotals.total_spend).toFixed(2) \n  : 0;\ncurrentTotals.cpa = currentTotals.total_conversions > 0 \n  ? (currentTotals.total_spend / currentTotals.total_conversions).toFixed(2) \n  : 0;\ncurrentTotals.ctr = currentTotals.total_impressions > 0 \n  ? ((currentTotals.total_clicks / currentTotals.total_impressions) * 100).toFixed(2) \n  : 0;\ncurrentTotals.cpc = currentTotals.total_clicks > 0 \n  ? (currentTotals.total_spend / currentTotals.total_clicks).toFixed(2) \n  : 0;\n\npriorTotals.roas = priorTotals.total_spend > 0 \n  ? (priorTotals.total_revenue / priorTotals.total_spend).toFixed(2) \n  : 0;\npriorTotals.cpa = priorTotals.total_conversions > 0 \n  ? (priorTotals.total_spend / priorTotals.total_conversions).toFixed(2) \n  : 0;\n\n// Calculate WoW deltas\nconst deltas = {\n  spend_delta: ((currentTotals.total_spend - priorTotals.total_spend) / (priorTotals.total_spend || 1) * 100).toFixed(1),\n  conversions_delta: ((currentTotals.total_conversions - priorTotals.total_conversions) / (priorTotals.total_conversions || 1) * 100).toFixed(1),\n  roas_delta: ((currentTotals.roas - priorTotals.roas) / (priorTotals.roas || 1) * 100).toFixed(1),\n  cpa_delta: ((currentTotals.cpa - priorTotals.cpa) / (priorTotals.cpa || 1) * 100).toFixed(1)\n};\n\n// Add trend arrows\ndeltas.spend_arrow = parseFloat(deltas.spend_delta) > 0 ? '↑' : '↓';\ndeltas.conversions_arrow = parseFloat(deltas.conversions_delta) > 0 ? '↑' : '↓';\ndeltas.roas_arrow = parseFloat(deltas.roas_delta) > 0 ? '↑' : '↓';\ndeltas.cpa_arrow = parseFloat(deltas.cpa_delta) < 0 ? '↑' : '↓'; // Lower CPA is better\n\n// Rank campaigns by ROAS\nconst rankedByROAS = [...currentWeek]\n  .map(c => ({\n    ...c,\n    roas: c.spend > 0 ? (c.revenue / c.spend).toFixed(2) : 0,\n    cpa: c.conversions > 0 ? (c.spend / c.conversions).toFixed(2) : 999999\n  }))\n  .sort((a, b) => b.roas - a.roas);\n\nconst top3Campaigns = rankedByROAS.slice(0, 3);\nconst bottom3Campaigns = rankedByROAS.slice(-3).reverse();\n\n// Channel breakdown\nconst metaCampaigns = currentWeek.filter(c => c.platform === 'meta');\nconst googleCampaigns = currentWeek.filter(c => c.platform === 'google');\n\nconst metaTotals = aggregate(metaCampaigns);\nconst googleTotals = aggregate(googleCampaigns);\n\nreturn [{\n  json: {\n    currentTotals,\n    priorTotals,\n    deltas,\n    top3Campaigns,\n    bottom3Campaigns,\n    metaTotals,\n    googleTotals,\n    allCampaigns: rankedByROAS\n  }\n}];"
+            },
+            "id": "calculate-aggregates",
+            "name": "Calculate Aggregates & Deltas",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1680,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const { currentTotals, priorTotals, deltas } = $input.first().json;\n\nconst anomalies = [];\n\n// Spend spike with flat/declining conversions\nif (parseFloat(deltas.spend_delta) > 30 && parseFloat(deltas.conversions_delta) < 5) {\n  anomalies.push({\n    type: 'SPEND_SPIKE_NO_CONVERSIONS',\n    severity: 'HIGH',\n    message: `Spend increased ${deltas.spend_delta}% but conversions only changed ${deltas.conversions_delta}%`,\n    action: 'Review campaign targeting and exclude underperforming audiences'\n  });\n}\n\n// Conversion drop with normal spend\nif (parseFloat(deltas.conversions_delta) < -30 && Math.abs(parseFloat(deltas.spend_delta)) < 15) {\n  anomalies.push({\n    type: 'CONVERSION_DROP',\n    severity: 'CRITICAL',\n    message: `Conversions dropped ${Math.abs(deltas.conversions_delta)}% with stable spend`,\n    action: 'Check pixel/tracking, review landing page, verify conversion events'\n  });\n}\n\n// Zero conversions with significant spend\nif (currentTotals.total_conversions === 0 && currentTotals.total_spend > 100) {\n  anomalies.push({\n    type: 'TRACKING_FAILURE',\n    severity: 'CRITICAL',\n    message: `$${currentTotals.total_spend.toFixed(2)} spent with ZERO conversions recorded`,\n    action: 'URGENT: Verify pixel/conversion tracking is firing correctly'\n  });\n}\n\n// ROAS crash\nif (parseFloat(deltas.roas_delta) < -40) {\n  anomalies.push({\n    type: 'ROAS_CRASH',\n    severity: 'HIGH',\n    message: `ROAS dropped ${Math.abs(deltas.roas_delta)}% week-over-week`,\n    action: 'Pause low-performing campaigns, reallocate budget to top performers'\n  });\n}\n\n// CPA spike\nif (parseFloat(deltas.cpa_delta) > 50) {\n  anomalies.push({\n    type: 'CPA_SPIKE',\n    severity: 'MEDIUM',\n    message: `CPA increased ${deltas.cpa_delta}% - leads are getting more expensive`,\n    action: 'Review audience targeting, test new creatives, check competition'\n  });\n}\n\n// Determine overall health status\nlet health = '🟢 HEALTHY';\nif (anomalies.some(a => a.severity === 'MEDIUM')) health = '🟡 WATCH';\nif (anomalies.some(a => a.severity === 'HIGH' || a.severity === 'CRITICAL')) health = '🔴 CRITICAL';\n\nreturn [{ json: { ...$input.first().json, anomalies, health } }];"
+            },
+            "id": "detect-anomalies",
+            "name": "Detect Anomalies",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1880,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "const data = $input.first().json;\nconst { top3Campaigns, bottom3Campaigns, anomalies, deltas, currentTotals } = data;\n\nconst recommendations = {\n  budget_actions: [],\n  bidding_actions: [],\n  creative_actions: [],\n  tracking_actions: []\n};\n\n// Budget recommendations\nif (top3Campaigns.length > 0 && parseFloat(top3Campaigns[0].roas) > 3) {\n  recommendations.budget_actions.push(\n    `Increase budget on \"${top3Campaigns[0].campaign_name}\" by 20% (ROAS: ${top3Campaigns[0].roas}x)`\n  );\n}\n\nif (bottom3Campaigns.length > 0 && parseFloat(bottom3Campaigns[0].roas) < 1) {\n  recommendations.budget_actions.push(\n    `Reduce or pause \"${bottom3Campaigns[0].campaign_name}\" (ROAS: ${bottom3Campaigns[0].roas}x)`\n  );\n}\n\n// Bidding recommendations\nif (parseFloat(deltas.cpa_delta) > 20) {\n  recommendations.bidding_actions.push(\n    `Review bid strategy - CPA increased ${deltas.cpa_delta}%. Consider switching to target CPA.`\n  );\n}\n\nif (parseFloat(currentTotals.ctr) < 1) {\n  recommendations.bidding_actions.push(\n    `Low CTR (${currentTotals.ctr}%) - review ad copy and targeting relevance`\n  );\n}\n\n// Creative recommendations\nif (parseFloat(deltas.conversions_delta) < -15) {\n  recommendations.creative_actions.push(\n    `Conversions down ${Math.abs(deltas.conversions_delta)}% - test new ad creatives and offers`\n  );\n}\n\nbottom3Campaigns.forEach(c => {\n  if (parseFloat(c.roas) < 1.5 && c.spend > 50) {\n    recommendations.creative_actions.push(\n      `Refresh creatives for \"${c.campaign_name}\" (ROAS: ${c.roas}x)`\n    );\n  }\n});\n\n// Tracking recommendations from anomalies\nanomalies.forEach(a => {\n  if (a.type === 'TRACKING_FAILURE' || a.type === 'CONVERSION_DROP') {\n    recommendations.tracking_actions.push(a.action);\n  }\n});\n\nreturn [{ json: { ...data, recommendations } }];"
+            },
+            "id": "generate-recommendations",
+            "name": "Generate Recommendations",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2080,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "document",
+                "operation": "create",
+                "name": "={{ $json.client_name }} Weekly Report - {{ $json.week_label }}",
+                "folderId": "={{ $env.GOOGLE_DRIVE_REPORTS_FOLDER_ID }}",
+                "options": {}
+            },
+            "id": "create-google-doc",
+            "name": "Create Google Doc",
+            "type": "n8n-nodes-base.googleDocs",
+            "typeVersion": 2,
+            "position": [
+                2280,
+                380
+            ],
+            "credentials": {
+                "googleDocsOAuth2Api": {
+                    "id": "GOOGLE_DOCS_CRED_ID",
+                    "name": "Google Docs OAuth2"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "document",
+                "operation": "update",
+                "documentId": "={{ $json.documentId }}",
+                "actionsUi": {
+                    "actionFields": [
+                        {
+                            "action": "insertText",
+                            "text": "WEEKLY ADS REPORT\n{{ $json.client_name }}\n{{ $json.week_label }}\n\n══════════════════════════════════════\nEXECUTIVE SUMMARY\n══════════════════════════════════════\n\nKey Metrics This Week:\n• Spend: ${{ $json.currentTotals.total_spend.toFixed(2) }} ({{ $json.deltas.spend_arrow }} {{ $json.deltas.spend_delta }}%)\n• Conversions: {{ $json.currentTotals.total_conversions }} ({{ $json.deltas.conversions_arrow }} {{ $json.deltas.conversions_delta }}%)\n• ROAS: {{ $json.currentTotals.roas }}x ({{ $json.deltas.roas_arrow }} {{ $json.deltas.roas_delta }}%)\n• CPA: ${{ $json.currentTotals.cpa }} ({{ $json.deltas.cpa_arrow }} {{ $json.deltas.cpa_delta }}%)\n\nHealth Status: {{ $json.health }}\n\n══════════════════════════════════════\nTOP PERFORMING CAMPAIGNS\n══════════════════════════════════════\n{{ $json.top3Campaigns.map((c, i) => `${i+1}. ${c.campaign_name} - ROAS: ${c.roas}x`).join('\\n') }}\n\n══════════════════════════════════════\nCAMPAIGNS NEEDING ATTENTION\n══════════════════════════════════════\n{{ $json.bottom3Campaigns.map((c, i) => `${i+1}. ${c.campaign_name} - ROAS: ${c.roas}x`).join('\\n') }}\n\n══════════════════════════════════════\nRECOMMENDED ACTIONS\n══════════════════════════════════════\n\n💰 Budget Actions:\n{{ $json.recommendations.budget_actions.map(a => `• ${a}`).join('\\n') || '• No budget changes needed' }}\n\n🎯 Bidding Actions:\n{{ $json.recommendations.bidding_actions.map(a => `• ${a}`).join('\\n') || '• No bidding changes needed' }}\n\n🎨 Creative Actions:\n{{ $json.recommendations.creative_actions.map(a => `• ${a}`).join('\\n') || '• No creative changes needed' }}\n\n🔧 Tracking Actions:\n{{ $json.recommendations.tracking_actions.map(a => `• ${a}`).join('\\n') || '• No tracking issues detected' }}\n\n══════════════════════════════════════\nGenerated automatically on {{ $now.toFormat('MMM d, yyyy h:mm a') }}\n"
+                        }
+                    ]
+                }
+            },
+            "id": "populate-doc",
+            "name": "Populate Report Content",
+            "type": "n8n-nodes-base.googleDocs",
+            "typeVersion": 2,
+            "position": [
+                2480,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "file",
+                "operation": "download",
+                "fileId": "={{ $json.documentId }}",
+                "options": {
+                    "mimeType": "application/pdf"
+                }
+            },
+            "id": "export-pdf",
+            "name": "Export as PDF",
+            "type": "n8n-nodes-base.googleDrive",
+            "typeVersion": 3,
+            "position": [
+                2680,
+                380
+            ],
+            "credentials": {
+                "googleDriveOAuth2Api": {
+                    "id": "GOOGLE_DRIVE_CRED_ID",
+                    "name": "Google Drive OAuth2"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "file",
+                "operation": "upload",
+                "name": "={{ $json.client_name }}_Weekly_Report_{{ $json.week_label.replace(/ /g, '_') }}.pdf",
+                "parents": [
+                    "={{ $env.GOOGLE_DRIVE_REPORTS_FOLDER_ID }}"
+                ],
+                "binaryPropertyName": "data"
+            },
+            "id": "upload-pdf",
+            "name": "Upload PDF to Drive",
+            "type": "n8n-nodes-base.googleDrive",
+            "typeVersion": 3,
+            "position": [
+                2880,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "databasePage",
+                "operation": "create",
+                "databaseId": "={{ $env.NOTION_REPORTS_DB_ID }}",
+                "propertiesUi": {
+                    "propertyValues": [
+                        {
+                            "key": "Name",
+                            "title": "{{ $json.client_name }} - Week of {{ $json.week_label }}"
+                        },
+                        {
+                            "key": "Client",
+                            "relation": [
+                                "{{ $json.notion_client_id }}"
+                            ]
+                        },
+                        {
+                            "key": "Week",
+                            "date": "{{ $json.current_week_start }}"
+                        },
+                        {
+                            "key": "Spend",
+                            "number": "{{ $json.currentTotals.total_spend }}"
+                        },
+                        {
+                            "key": "Conversions",
+                            "number": "{{ $json.currentTotals.total_conversions }}"
+                        },
+                        {
+                            "key": "ROAS",
+                            "number": "{{ $json.currentTotals.roas }}"
+                        },
+                        {
+                            "key": "CPA",
+                            "number": "{{ $json.currentTotals.cpa }}"
+                        },
+                        {
+                            "key": "WoW ROAS Δ",
+                            "number": "{{ $json.deltas.roas_delta }}"
+                        },
+                        {
+                            "key": "Health",
+                            "select": "{{ $json.health }}"
+                        },
+                        {
+                            "key": "PDF Link",
+                            "url": "{{ $json.pdf_web_link }}"
+                        },
+                        {
+                            "key": "Has Anomalies",
+                            "checkbox": "{{ $json.anomalies.length > 0 }}"
+                        }
+                    ]
+                }
+            },
+            "id": "notion-client-report",
+            "name": "Create Notion Report Entry",
+            "type": "n8n-nodes-base.notion",
+            "typeVersion": 2.1,
+            "position": [
+                3080,
+                280
+            ],
+            "credentials": {
+                "notionApi": {
+                    "id": "NOTION_CRED_ID",
+                    "name": "Notion API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "PUT",
+                "url": "https://rest.gohighlevel.com/v1/contacts/{{ $json.ghl_contact_id }}",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "customField",
+                            "value": "={{ JSON.stringify({ weekly_ads_json: JSON.stringify({ week: $json.week_label, spend: $json.currentTotals.total_spend, conversions: $json.currentTotals.total_conversions, roas: $json.currentTotals.roas, cpa: $json.currentTotals.cpa, health: $json.health, top_campaign: $json.top3Campaigns[0]?.campaign_name, anomalies: $json.anomalies.length }), weekly_ads_roas: $json.currentTotals.roas, weekly_ads_spend: $json.currentTotals.total_spend, weekly_report_pdf_url: $json.pdf_web_link }) }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "update-ghl",
+            "name": "Update GHL Contact",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                3080,
+                480
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "GHL_CRED_ID",
+                    "name": "GHL API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sendTo": "={{ $json.stakeholder_emails }}",
+                "subject": "Weekly Ads Report: {{ $json.client_name }} | {{ $json.week_label }}",
+                "message": "<h1>Weekly Ads Report</h1><h2>{{ $json.client_name }} | {{ $json.week_label }}</h2><h3>Key Metrics</h3><table><tr><td>Spend</td><td>${{ $json.currentTotals.total_spend.toFixed(2) }} ({{ $json.deltas.spend_arrow }} {{ $json.deltas.spend_delta }}%)</td></tr><tr><td>Conversions</td><td>{{ $json.currentTotals.total_conversions }} ({{ $json.deltas.conversions_arrow }} {{ $json.deltas.conversions_delta }}%)</td></tr><tr><td>ROAS</td><td>{{ $json.currentTotals.roas }}x ({{ $json.deltas.roas_arrow }} {{ $json.deltas.roas_delta }}%)</td></tr><tr><td>CPA</td><td>${{ $json.currentTotals.cpa }} ({{ $json.deltas.cpa_arrow }} {{ $json.deltas.cpa_delta }}%)</td></tr></table><h3>Status: {{ $json.health }}</h3><p><a href='{{ $json.pdf_web_link }}'>📄 View Full Report</a></p>",
+                "options": {
+                    "attachmentsUi": {
+                        "attachmentsBinary": [
+                            {
+                                "property": "data"
+                            }
+                        ]
+                    }
+                }
+            },
+            "id": "send-client-email",
+            "name": "Email Client Report",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2.1,
+            "position": [
+                3280,
+                380
+            ],
+            "credentials": {
+                "gmailOAuth2": {
+                    "id": "GMAIL_CRED_ID",
+                    "name": "Gmail OAuth2"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "boolean": [
+                        {
+                            "value1": "={{ $json.loop_done }}",
+                            "value2": true
+                        }
+                    ]
+                }
+            },
+            "id": "check-loop-done",
+            "name": "All Clients Processed?",
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 1,
+            "position": [
+                3480,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Aggregate all client data for agency summary\nconst allClientData = $input.all().map(i => i.json);\n\nconst portfolioTotals = allClientData.reduce((acc, client) => ({\n  total_spend: acc.total_spend + (client.currentTotals?.total_spend || 0),\n  total_conversions: acc.total_conversions + (client.currentTotals?.total_conversions || 0),\n  total_revenue: acc.total_revenue + (client.currentTotals?.total_revenue || 0)\n}), { total_spend: 0, total_conversions: 0, total_revenue: 0 });\n\nportfolioTotals.avg_roas = portfolioTotals.total_spend > 0\n  ? (portfolioTotals.total_revenue / portfolioTotals.total_spend).toFixed(2)\n  : 0;\n\nconst clientsHealthy = allClientData.filter(c => c.health?.includes('🟢')).length;\nconst clientsWatch = allClientData.filter(c => c.health?.includes('🟡')).length;\nconst clientsCritical = allClientData.filter(c => c.health?.includes('🔴')).length;\n\nconst topClient = allClientData.sort((a, b) => (b.currentTotals?.roas || 0) - (a.currentTotals?.roas || 0))[0];\nconst worstClient = allClientData.sort((a, b) => (a.currentTotals?.roas || 0) - (b.currentTotals?.roas || 0))[0];\n\nconst allAnomalies = allClientData.flatMap(c => (c.anomalies || []).map(a => ({ client: c.client_name, ...a })));\n\nreturn [{\n  json: {\n    week_label: allClientData[0]?.week_label || 'Unknown Week',\n    portfolioTotals,\n    client_count: allClientData.length,\n    clientsHealthy,\n    clientsWatch,\n    clientsCritical,\n    topClient: topClient?.client_name,\n    topClientROAS: topClient?.currentTotals?.roas,\n    worstClient: worstClient?.client_name,\n    worstClientROAS: worstClient?.currentTotals?.roas,\n    allAnomalies,\n    allClientData\n  }\n}];"
+            },
+            "id": "aggregate-agency",
+            "name": "Aggregate Agency Data",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3680,
+                280
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "databasePage",
+                "operation": "create",
+                "databaseId": "={{ $env.NOTION_AGENCY_DB_ID }}",
+                "propertiesUi": {
+                    "propertyValues": [
+                        {
+                            "key": "Week",
+                            "title": "Week of {{ $json.week_label }}"
+                        },
+                        {
+                            "key": "Total Spend",
+                            "number": "{{ $json.portfolioTotals.total_spend }}"
+                        },
+                        {
+                            "key": "Total Conversions",
+                            "number": "{{ $json.portfolioTotals.total_conversions }}"
+                        },
+                        {
+                            "key": "Avg ROAS",
+                            "number": "{{ $json.portfolioTotals.avg_roas }}"
+                        },
+                        {
+                            "key": "Clients Healthy",
+                            "number": "{{ $json.clientsHealthy }}"
+                        },
+                        {
+                            "key": "Clients Watch",
+                            "number": "{{ $json.clientsWatch }}"
+                        },
+                        {
+                            "key": "Clients Critical",
+                            "number": "{{ $json.clientsCritical }}"
+                        },
+                        {
+                            "key": "Top Client",
+                            "text": "{{ $json.topClient }} ({{ $json.topClientROAS }}x)"
+                        },
+                        {
+                            "key": "Worst Client",
+                            "text": "{{ $json.worstClient }} ({{ $json.worstClientROAS }}x)"
+                        }
+                    ]
+                }
+            },
+            "id": "notion-agency-summary",
+            "name": "Update Agency Dashboard",
+            "type": "n8n-nodes-base.notion",
+            "typeVersion": 2.1,
+            "position": [
+                3880,
+                280
+            ]
+        },
+        {
+            "parameters": {
+                "channel": "#ads-reports",
+                "text": "📊 *Weekly Ads Report Summary*\n\n*{{ $json.week_label }}*\n\nPortfolio: ${{ $json.portfolioTotals.total_spend.toFixed(2) }} spent | {{ $json.portfolioTotals.total_conversions }} conversions | {{ $json.portfolioTotals.avg_roas }}x ROAS\n\nClient Health:\n🟢 {{ $json.clientsHealthy }} healthy\n🟡 {{ $json.clientsWatch }} watch\n🔴 {{ $json.clientsCritical }} critical\n\n🏆 Top: {{ $json.topClient }} ({{ $json.topClientROAS }}x)\n⚠️ Needs attention: {{ $json.worstClient }} ({{ $json.worstClientROAS }}x)\n\n{{ $json.allAnomalies.length > 0 ? '🚨 ' + $json.allAnomalies.length + ' anomalies detected - check Notion' : '✅ No critical anomalies' }}"
+            },
+            "id": "slack-notification",
+            "name": "Slack Agency Summary",
+            "type": "n8n-nodes-base.slack",
+            "typeVersion": 2.1,
+            "position": [
+                4080,
+                280
+            ],
+            "credentials": {
+                "slackApi": {
+                    "id": "SLACK_CRED_ID",
+                    "name": "Slack API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "sendTo": "={{ $env.AGENCY_TEAM_EMAILS }}",
+                "subject": "📊 Weekly Ads Summary | {{ $json.week_label }}",
+                "message": "<h1>Weekly Agency Summary</h1><h2>{{ $json.week_label }}</h2><h3>Portfolio Overview</h3><p>Total Spend: ${{ $json.portfolioTotals.total_spend.toFixed(2) }}<br>Total Conversions: {{ $json.portfolioTotals.total_conversions }}<br>Average ROAS: {{ $json.portfolioTotals.avg_roas }}x</p><h3>Client Health</h3><p>🟢 {{ $json.clientsHealthy }} healthy | 🟡 {{ $json.clientsWatch }} watch | 🔴 {{ $json.clientsCritical }} critical</p><h3>Highlights</h3><p>🏆 Top Performer: {{ $json.topClient }} ({{ $json.topClientROAS }}x ROAS)<br>⚠️ Needs Attention: {{ $json.worstClient }} ({{ $json.worstClientROAS }}x ROAS)</p>{{ $json.allAnomalies.length > 0 ? '<h3>🚨 Anomalies Detected</h3><ul>' + $json.allAnomalies.map(a => '<li>' + a.client + ': ' + a.message + '</li>').join('') + '</ul>' : '' }}",
+                "options": {}
+            },
+            "id": "email-agency-summary",
+            "name": "Email Agency Summary",
+            "type": "n8n-nodes-base.gmail",
+            "typeVersion": 2.1,
+            "position": [
+                4280,
+                280
+            ]
+        }
+    ],
+    "connections": {
+        "Weekly Monday 9AM": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Triggers",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "On-Demand Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Merge Triggers",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "Merge Triggers": {
+            "main": [
+                [
+                    {
+                        "node": "Get Active Clients",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Get Active Clients": {
+            "main": [
+                [
+                    {
+                        "node": "Loop Clients",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Loop Clients": {
+            "main": [
+                [
+                    {
+                        "node": "Set Date Range",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Date Range": {
+            "main": [
+                [
+                    {
+                        "node": "Meta Ads - Current Week",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Meta Ads - Prior Week",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Google Ads - Current Week",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Google Ads - Prior Week",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Meta Ads - Current Week": {
+            "main": [
+                [
+                    {
+                        "node": "Normalize & Merge Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Meta Ads - Prior Week": {
+            "main": [
+                [
+                    {
+                        "node": "Normalize & Merge Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Ads - Current Week": {
+            "main": [
+                [
+                    {
+                        "node": "Normalize & Merge Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Ads - Prior Week": {
+            "main": [
+                [
+                    {
+                        "node": "Normalize & Merge Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Normalize & Merge Data": {
+            "main": [
+                [
+                    {
+                        "node": "Calculate Aggregates & Deltas",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Calculate Aggregates & Deltas": {
+            "main": [
+                [
+                    {
+                        "node": "Detect Anomalies",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Detect Anomalies": {
+            "main": [
+                [
+                    {
+                        "node": "Generate Recommendations",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Generate Recommendations": {
+            "main": [
+                [
+                    {
+                        "node": "Create Google Doc",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Google Doc": {
+            "main": [
+                [
+                    {
+                        "node": "Populate Report Content",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Populate Report Content": {
+            "main": [
+                [
+                    {
+                        "node": "Export as PDF",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Export as PDF": {
+            "main": [
+                [
+                    {
+                        "node": "Upload PDF to Drive",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Upload PDF to Drive": {
+            "main": [
+                [
+                    {
+                        "node": "Create Notion Report Entry",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Update GHL Contact",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Email Client Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Create Notion Report Entry": {
+            "main": [
+                [
+                    {
+                        "node": "All Clients Processed?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update GHL Contact": {
+            "main": [
+                [
+                    {
+                        "node": "All Clients Processed?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Email Client Report": {
+            "main": [
+                [
+                    {
+                        "node": "All Clients Processed?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "All Clients Processed?": {
+            "main": [
+                [
+                    {
+                        "node": "Aggregate Agency Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "Loop Clients",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Aggregate Agency Data": {
+            "main": [
+                [
+                    {
+                        "node": "Update Agency Dashboard",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Update Agency Dashboard": {
+            "main": [
+                [
+                    {
+                        "node": "Slack Agency Summary",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Email Agency Summary",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "staticData": null,
+    "tags": [],
+    "triggerCount": 2,
+    "updatedAt": "2024-12-22T17:54:00.000Z",
+    "versionId": "1"
+}

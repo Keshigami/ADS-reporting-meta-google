@@ -1,44 +1,74 @@
 # ADS Reporting System - Meta & Google
 
-Automated weekly ads reporting system for digital agencies using n8n, Notion, GoHighLevel, and PDF generation.
+Automated weekly ads reporting system for digital agencies using **local n8n**, Notion, GoHighLevel, and Google Docs PDF generation.
 
 ## Overview
 
-This repository contains the design specifications and implementation guides for an automated weekly ads reporting system that:
+This system generates **two types of weekly reports**:
 
-- Pulls data from Meta Ads and Google Ads APIs
-- Generates professional PDF reports per client
-- Stores reports in Google Drive and Notion
-- Updates GoHighLevel CRM with key metrics
-- Emails stakeholders with executive summaries
+1. **Client Reports** - Professional PDFs sent to each client with KPIs, campaign breakdown, and recommendations
+2. **Agency Dashboard** - Internal summary across all clients with health status and anomaly tracking
 
-## Documentation
+```
+┌──────────────┐     ┌──────────────┐
+│  Meta Ads    │     │  Google Ads  │
+└──────┬───────┘     └──────┬───────┘
+       └─────────┬─────────┘
+                 ▼
+       ┌─────────────────────┐
+       │   n8n (Local)       │
+       │  Weekly Cron 9 AM   │
+       └─────────┬───────────┘
+                 │
+    ┌────────────┼────────────┐
+    ▼            ▼            ▼
+┌────────┐  ┌────────┐  ┌──────────┐
+│ PDF    │  │ Notion │  │ GHL      │
+│ Report │  │ DB     │  │ Update   │
+└────────┘  └────────┘  └──────────┘
+```
 
-| Document | Description |
-|----------|-------------|
-| [Executive Summary](Executive_Summary_Weekly_Ads_System.md) | High-level overview for decision makers with stack options |
-| [Technical Specification](Weekly_Ads_Reporting_System_Specification.md) | Detailed n8n workflow, Notion schema, GHL config, LaTeX templates |
+## Quick Start
 
-## Recommended Stack
+1. **Import workflow**: `n8n_workflow_weekly_ads_report.json` → n8n
+2. **Create Notion databases**: See `notion_database_schemas.md`
+3. **Configure credentials**: See `SETUP_GUIDE.md`
+4. **Test with one client**
+5. **Enable weekly schedule**
 
-- **Data Aggregation**: Supermetrics ($99/mo)
-- **Automation**: n8n (self-hosted)
-- **PDF Generation**: Carbone.io ($50/mo)
-- **Storage**: Google Drive
-- **CRM**: GoHighLevel
-- **Database**: Notion
+## Files
+
+| File | Purpose |
+|------|---------|
+| `n8n_workflow_weekly_ads_report.json` | **Import this into n8n** |
+| `SETUP_GUIDE.md` | Step-by-step setup instructions |
+| `notion_database_schemas.md` | Notion database property specs |
+| `Executive_Summary_Weekly_Ads_System.md` | Overview for decision makers |
+| `Weekly_Ads_Reporting_System_Specification.md` | Full technical spec |
+| `Budget_Stack_Free_Alternatives.md` | Cost comparison and alternatives |
+
+## Stack (FREE)
+
+| Component | Tool | Cost |
+|-----------|------|------|
+| Automation | n8n (local) | $0 |
+| Data Pull | Direct APIs | $0 |
+| PDF Generation | Google Docs → PDF | $0 |
+| Storage | Google Drive | $0 |
+| Dashboard | Notion | $0 |
+| CRM | GoHighLevel | (existing) |
+| **Total** | | **$0/month** |
 
 ## Project Status
 
 - [x] System architecture designed
-- [x] n8n workflow specified (20+ nodes)
-- [x] LaTeX template created
-- [x] Notion database schema defined
+- [x] n8n workflow created (20+ nodes)
+- [x] Notion database schemas defined
 - [x] GHL configuration documented
-- [ ] Supermetrics setup
-- [ ] Carbone.io integration
-- [ ] n8n workflow implementation
-- [ ] Testing with pilot client
+- [x] Setup guide written
+- [ ] API credentials configured
+- [ ] Notion databases created
+- [ ] Test with pilot client
 - [ ] Full rollout
 
 ## License
