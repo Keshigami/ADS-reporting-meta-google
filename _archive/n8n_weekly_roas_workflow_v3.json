@@ -1,0 +1,390 @@
+{
+    "name": "Weekly Ads ROAS & MER Report (v3 - Notion)",
+    "nodes": [
+        {
+            "parameters": {
+                "rule": {
+                    "interval": [
+                        {
+                            "field": "weeks",
+                            "triggerAtDay": [
+                                1
+                            ],
+                            "triggerAtHour": 9
+                        }
+                    ]
+                }
+            },
+            "id": "schedule-trigger",
+            "name": "Weekly Schedule",
+            "type": "n8n-nodes-base.scheduleTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                220,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "path": "weekly-ads-report",
+                "options": {}
+            },
+            "id": "webhook-trigger",
+            "name": "Manual / Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1.1,
+            "position": [
+                220,
+                480
+            ]
+        },
+        {
+            "parameters": {
+                "values": {
+                    "string": [
+                        {
+                            "name": "start_date",
+                            "value": "={{ $now.minus({days: 7}).toFormat('yyyy-MM-dd') }}"
+                        },
+                        {
+                            "name": "end_date",
+                            "value": "={{ $now.minus({days: 1}).toFormat('yyyy-MM-dd') }}"
+                        },
+                        {
+                            "name": "report_name",
+                            "value": "={{ 'Weekly Report: ' + $now.minus({days: 7}).toFormat('MMM d') + ' - ' + $now.minus({days: 1}).toFormat('MMM d') }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "set-dates",
+            "name": "Set Date Range",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.2,
+            "position": [
+                460,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://googleads.googleapis.com/v14/customers/3300525230/googleAds:searchStream",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "googleAdsOAuth2Api",
+                "sendBody": true,
+                "contentType": "json",
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "query",
+                            "value": "={{ `SELECT campaign.id, campaign.name, metrics.cost_micros, metrics.conversions, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${$json.start_date}' AND '${$json.end_date}'` }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "google-ads",
+            "name": "Google Ads",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                720,
+                240
+            ],
+            "credentials": {
+                "googleAdsOAuth2Api": {
+                    "id": "googleAdsOAuth2Api",
+                    "name": "Google Ads account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "https://graph.facebook.com/v19.0/act_54337533/insights",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "facebookGraphApi",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "level",
+                            "value": "account"
+                        },
+                        {
+                            "name": "fields",
+                            "value": "spend,clicks,actions,action_values"
+                        },
+                        {
+                            "name": "time_range",
+                            "value": "={{ `{'since':'${$json.start_date}','until':'${$json.end_date}'}` }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "meta-ads",
+            "name": "Meta Ads",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                720,
+                400
+            ],
+            "credentials": {
+                "facebookGraphApi": {
+                    "id": "z8gP5ZZAbWdJ6ONT",
+                    "name": "Facebook Graph API account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "url": "https://services.leadconnectorhq.com/opportunities/search",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "locationId",
+                            "value": "FrSOvqFDYNjesCMYVuAc"
+                        },
+                        {
+                            "name": "status",
+                            "value": "won"
+                        },
+                        {
+                            "name": "date",
+                            "value": "={{ $json.start_date }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "id": "ghl-opps",
+            "name": "GHL Opportunities",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                720,
+                560
+            ],
+            "credentials": {
+                "httpHeaderAuth": {
+                    "id": "ghl_header_auth",
+                    "name": "GHL API Key"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "mode": "combine",
+                "combinationMode": "multiplex",
+                "options": {}
+            },
+            "id": "merge-data",
+            "name": "Merge All Data",
+            "type": "n8n-nodes-base.merge",
+            "typeVersion": 2.1,
+            "position": [
+                1000,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "jsCode": "// Initialize Totals\nlet googleSpend = 0, googleLeads = 0, googleRevenue = 0;\nlet metaSpend = 0, metaLeads = 0, metaRevenue = 0;\nlet ghlRevenue = 0;\nlet wonDeals = 0;\n\n// Process Google Ads Data (Input 0)\nconst googleData = $input.all()[0]?.json || [];\n(Array.isArray(googleData) ? googleData : [googleData]).forEach(row => {\n  const items = row.results || (row.metrics ? [row] : []);\n  items.forEach(item => {\n     if (item.metrics) {\n       googleSpend += (parseInt(item.metrics.costMicros) || 0) / 1000000;\n       googleLeads += parseFloat(item.metrics.conversions) || 0;\n       googleRevenue += parseFloat(item.metrics.conversionsValue) || 0;\n     }\n  });\n});\n\n// Process Meta Ads Data (Input 1)\nconst metaData = $input.all()[1]?.json || [];\nconst metaItems = metaData.data || (Array.isArray(metaData) ? metaData : []);\n(Array.isArray(metaItems) ? metaItems : [metaItems]).forEach(campaign => {\n   metaSpend += parseFloat(campaign.spend) || 0;\n   const actions = campaign.actions || [];\n   const leadAction = actions.find(a => ['lead', 'contact_total', 'submit_application_total'].includes(a.action_type));\n   if (leadAction) metaLeads += parseFloat(leadAction.value);\n   \n   const actionValues = campaign.action_values || [];\n   const purchaseValue = actionValues.find(a => ['purchase', 'omn_purchase'].includes(a.action_type));\n   if (purchaseValue) metaRevenue += parseFloat(purchaseValue.value);\n});\n\n// Process GHL Data (Input 2)\nconst ghlData = $input.all()[2]?.json || [];\nconst opportunities = ghlData.opportunities || (Array.isArray(ghlData) ? ghlData : []);\n(Array.isArray(opportunities) ? opportunities : [opportunities]).forEach(op => {\n   // Ensure we only count opps won in the date range if API doesn't filter perfectly\n   // GHL search API sometimes needs precise date handling. Assuming basic fetch covers range.\n   if (op.status === 'won') {\n     ghlRevenue += parseFloat(op.monetaryValue) || 0;\n     wonDeals++;\n   }\n});\n\nconst totalSpend = googleSpend + metaSpend;\nconst totalLeads = googleLeads + metaLeads;\nconst totalRevenue = ghlRevenue; \n\n// MER (Marketing Efficiency Ratio) = Total Revenue / Total Spend\nconst mer = totalSpend > 0 ? (totalRevenue / totalSpend).toFixed(2) : \"0.00\";\nconst roas = totalSpend > 0 ? (totalRevenue / totalSpend).toFixed(2) : \"0.00\"; \nconst blendedCpl = totalLeads > 0 ? (totalSpend / totalLeads).toFixed(2) : \"0.00\";\n\nreturn {\n  json: {\n    report_name: $input.all()[0].json.report_name,\n    start_date: $input.all()[0].json.start_date,\n    end_date: $input.all()[0].json.end_date,\n    overall: {\n      spend: totalSpend.toFixed(2),\n      revenue: totalRevenue.toFixed(2),\n      mer: mer,\n      roas: roas,\n      leads: totalLeads,\n      cpl: blendedCpl,\n      won_deals: wonDeals\n    },\n    google: {\n      spend: googleSpend.toFixed(2),\n      roas: googleSpend > 0 ? (googleRevenue / googleSpend).toFixed(2) : \"0.00\"\n    },\n    meta: {\n      spend: metaSpend.toFixed(2),\n      roas: metaSpend > 0 ? (metaRevenue / metaSpend).toFixed(2) : \"0.00\"\n    }\n  }\n};"
+            },
+            "id": "calculate-metrics",
+            "name": "Calculate MER & ROAS",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1220,
+                380
+            ]
+        },
+        {
+            "parameters": {
+                "resource": "databasePage",
+                "databaseId": "YOUR_WEEKLY_REPORTS_DATABASE_ID",
+                "properties": {
+                    "Report Name": {
+                        "title": [
+                            {
+                                "text": {
+                                    "content": "={{ $json.report_name }}"
+                                }
+                            }
+                        ]
+                    },
+                    "Date Range": {
+                        "date": {
+                            "start": "={{ $json.start_date }}",
+                            "end": "={{ $json.end_date }}"
+                        }
+                    },
+                    "Total Spend": {
+                        "number": "={{ parseFloat($json.overall.spend) }}"
+                    },
+                    "Total Revenue": {
+                        "number": "={{ parseFloat($json.overall.revenue) }}"
+                    },
+                    "MER": {
+                        "number": "={{ parseFloat($json.overall.mer) }}"
+                    },
+                    "Blended ROAS": {
+                        "number": "={{ parseFloat($json.overall.roas) }}"
+                    }
+                }
+            },
+            "id": "notion-create",
+            "name": "Notion: Create Weekly Report",
+            "type": "n8n-nodes-base.notion",
+            "typeVersion": 2,
+            "position": [
+                1440,
+                380
+            ],
+            "credentials": {
+                "notionApi": {
+                    "id": "notion_api_cred",
+                    "name": "Notion API"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "channelId": "1423013870456274944",
+                "text": "={{ `📊 **WEEKLY ADS REPORT**\n*${$json.report_name}*\n\n🌟 **MER: ${$json.overall.mer}** (Target: 3.0+)\n💰 Revenue: $${$json.overall.revenue}\n💸 Spend: $${$json.overall.spend}\n\n**Platform Breakdown**\nGoogle: $${$json.google.spend} | ROAS: ${$json.google.roas}\nMeta: $${$json.meta.spend} | ROAS: ${$json.meta.roas}\n\n✅ Report saved to Notion.` }}"
+            },
+            "id": "discord-notify",
+            "name": "Discord Notification",
+            "type": "n8n-nodes-base.discord",
+            "typeVersion": 2,
+            "position": [
+                1660,
+                380
+            ],
+            "credentials": {
+                "discordApi": {
+                    "id": "discord_webhook_or_bot",
+                    "name": "Discord Webhook"
+                }
+            }
+        }
+    ],
+    "connections": {
+        "Weekly Schedule": {
+            "main": [
+                [
+                    {
+                        "node": "Set Date Range",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Manual / Webhook": {
+            "main": [
+                [
+                    {
+                        "node": "Set Date Range",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Set Date Range": {
+            "main": [
+                [
+                    {
+                        "node": "Google Ads",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "Meta Ads",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "GHL Opportunities",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Google Ads": {
+            "main": [
+                [
+                    {
+                        "node": "Merge All Data",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Meta Ads": {
+            "main": [
+                [
+                    {
+                        "node": "Merge All Data",
+                        "type": "main",
+                        "index": 1
+                    }
+                ]
+            ]
+        },
+        "GHL Opportunities": {
+            "main": [
+                [
+                    {
+                        "node": "Merge All Data",
+                        "type": "main",
+                        "index": 2
+                    }
+                ]
+            ]
+        },
+        "Merge All Data": {
+            "main": [
+                [
+                    {
+                        "node": "Calculate Metrics",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Calculate Metrics": {
+            "main": [
+                [
+                    {
+                        "node": "Notion: Create Weekly Report",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Notion: Create Weekly Report": {
+            "main": [
+                [
+                    {
+                        "node": "Discord Notification",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

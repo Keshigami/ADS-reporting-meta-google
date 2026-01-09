@@ -1,19 +1,21 @@
 # GHL Sub-Account Call Tracking Setup
-## Standard 3-Number Attribution System
+
+## Standard 4-Number Attribution System
 
 ---
 
 ## Overview
 
-Each client sub-account gets **3 GHL phone numbers** for clear call attribution:
+Each client sub-account gets **up to 4 GHL phone numbers** for clear call attribution:
 
 | Number | Purpose | Used In |
 |--------|---------|---------|
-| #1 | Google Ads | Google Call Ads, Search Ads, Google landing pages |
-| #2 | Facebook/Meta | Facebook ads, Instagram ads, Meta landing pages |
-| #3 | Organic/Other | Website, GMB, Yelp, print, referrals |
+| #1 | Meta Ads | Facebook ads, Instagram ads, Meta landing pages |
+| #2 | Google Ads | Google Search Ads, Display, Google landing pages |
+| #3 | Local Service Ads (LSA) | Google LSA (if applicable) |
+| #4 | Organic/Other | Website, GMB, Yelp, print, referrals |
 
-**Cost:** $6/month per client
+**Cost:** $6-8/month per client (3-4 numbers × $2/each)
 
 ---
 
@@ -84,11 +86,11 @@ ACTON-ORGANIC
 
 ## Client Tracking Sheet
 
-| Client | Google # | Facebook # | Organic # | Status |
-|--------|----------|------------|-----------|--------|
-| Acton | TBD | 530-557-3502 | TBD | Partial |
-| [Client B] | | | | Not Started |
-| [Client C] | | | | Not Started |
+| Client | Meta # | Google # | LSA # | Organic # | Status |
+|--------|--------|----------|-------|-----------|--------|
+| MEC Builds | TBD | TBD | TBD | TBD | In Setup |
+| Acton | 530-557-3502 | TBD | N/A | TBD | Partial |
+| [Client B] | | | | | Not Started |
 
 ---
 

@@ -1,4 +1,5 @@
 # Call Tracking Strategy
+
 ## For Multi-Channel Ad Campaigns
 
 ---
@@ -54,12 +55,13 @@ Website    ───┘
 
 ---
 
-### Level 2: One Number Per Channel ($6/month)
+### Level 2: One Number Per Channel ($6-8/month)
 
 ```
-Google Ads  ──→  Number 1  ──→  28 calls from Google
-Facebook   ──→  Number 2  ──→  15 calls from Facebook
-Website    ──→  Number 3  ──→  4 calls from Website
+Meta Ads    ──→  Number 1  ──→  15 calls from Meta
+Google Ads  ──→  Number 2  ──→  28 calls from Google
+LSA         ──→  Number 3  ──→  12 calls from LSA
+Website     ──→  Number 4  ──→  4 calls from Website
 ```
 
 **Know:** Calls per channel  
@@ -86,9 +88,9 @@ Website        ──→  Number 5  ──→  4 calls
 
 | Client Type | Recommendation | Cost |
 |-------------|---------------|------|
-| Small (1-3 campaigns) | One number per channel | $6/mo |
-| Medium (4-8 campaigns) | One number per campaign | $12-16/mo |
-| Large/High-spend | CallRail | $45/mo |
+| Small (1-2 campaigns) | One number per channel (3 numbers) | $6/mo |
+| Medium (has LSA) | One number per channel + LSA (4 numbers) | $8/mo |
+| Large/High-spend | CallRail for dynamic insertion | $45/mo |
 
 ---
 

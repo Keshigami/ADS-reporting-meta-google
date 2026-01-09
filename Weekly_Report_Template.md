@@ -1,4 +1,5 @@
 # Weekly Ads Report Template
+
 ## Consolidated Google Ads + Facebook Ads + Phone Calls
 
 ---
@@ -128,38 +129,38 @@ The weekly PDF report consolidates all ad data into one client-friendly document
 
 ---
 
-## Page 4: Call Details
-
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                                                                     │
 │  📞 PHONE CALL SUMMARY                                              │
 │  ════════════════════                                               │
 │                                                                     │
-│  TOTAL CALLS THIS WEEK: 43                                          │
+│  TOTAL CALLS THIS WEEK: 55                                          │
 │  ──────────────────────────────────────────────────────────────     │
 │                                                                     │
 │  BY SOURCE:                                                         │
 │  ┌───────────────────────────────────────────────────────────┐      │
 │  │ Source           │ Calls │ Spend  │ Cost/Call │ Duration │      │
 │  ├──────────────────┼───────┼────────┼───────────┼──────────┤      │
-│  │ Google Ads       │ 28    │ $650   │ $23.21    │ 3m 15s   │      │
-│  │ Facebook Ads     │ 15    │ $600   │ $40.00    │ 2m 45s   │      │
+│  │ Meta Ads         │ 15    │ $600   │ $40.00    │ 2m 45s   │      │
+│  │ Google Ads       │ 18    │ $450   │ $25.00    │ 3m 15s   │      │
+│  │ Local Service Ads│ 12    │ $200   │ $16.67    │ 4m 30s   │      │
+│  │ Organic/Website  │ 10    │ $0     │ FREE      │ 3m 00s   │      │
 │  ├──────────────────┼───────┼────────┼───────────┼──────────┤      │
-│  │ TOTAL            │ 43    │ $1,250 │ $29.07    │ 3m 05s   │      │
+│  │ TOTAL            │ 55    │ $1,250 │ $22.73    │ 3m 22s   │      │
 │  └──────────────────┴───────┴────────┴───────────┴──────────┘      │
 │                                                                     │
 │  WEEK-OVER-WEEK COMPARISON:                                         │
 │  ┌───────────────────────────────────────────────────────────┐      │
 │  │                   │ This Week │ Last Week │ Change │             │
 │  ├───────────────────┼───────────┼───────────┼────────┤             │
-│  │ Total Calls       │ 43        │ 35        │ +23% ↑ │             │
-│  │ Avg Duration      │ 3m 05s    │ 2m 48s    │ +10% ↑ │             │
-│  │ Cost per Call     │ $29.07    │ $31.25    │ -7% ↓  │             │
+│  │ Total Calls       │ 55        │ 43        │ +28% ↑ │             │
+│  │ Avg Duration      │ 3m 22s    │ 3m 05s    │ +9% ↑  │             │
+│  │ Cost per Call     │ $22.73    │ $29.07    │ -22% ↓ │             │
 │  └───────────────────┴───────────┴───────────┴────────┘             │
 │                                                                     │
-│  💡 INSIGHT: Google Ads driving 65% of calls at 42% lower           │
-│              cost per call than Facebook                            │
+│  💡 INSIGHT: LSA driving highest quality calls (longest duration)   │
+│              at lowest cost per call                                │
 │                                                                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```

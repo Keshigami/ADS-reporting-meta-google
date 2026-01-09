@@ -22,6 +22,7 @@ logs/
 *.tmp
 *.temp
 ~$*
+.tmp/
 
 # Credentials (NEVER commit these)
 credentials.json

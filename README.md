@@ -1,98 +1,51 @@
-# ADS Reporting System - Meta & Google
+# GHL Ad Manager & ROAS Attribution System
 
-Automated weekly ads reporting system for digital agencies using **local n8n**, Notion, GoHighLevel, and Google Docs PDF generation.
+System for tracking, attributing, and reporting Real ROAS (Return on Ad Spend) for MEC and agency clients using GoHighLevel.
 
-## Overview
+## 🎯 Objective
 
-This system generates **two types of weekly reports**:
+Enable "Fortune 500" level reporting by linking GHL "Closed Won" revenue back to Google/Meta Ads via Offline Conversions.
 
-1. **Client Reports** - Professional PDFs sent to each client with KPIs, campaign breakdown, and recommendations
-2. **Agency Dashboard** - Internal summary across all clients with health status and anomaly tracking
+## 📂 Project Structure
 
-```
-┌──────────────┐     ┌──────────────┐
-│  Meta Ads    │     │  Google Ads  │
-└──────┬───────┘     └──────┬───────┘
-       └─────────┬─────────┘
-                 ▼
-       ┌─────────────────────┐
-       │   n8n (Local)       │
-       │  Weekly Cron 9 AM   │
-       └─────────┬───────────┘
-                 │
-    ┌────────────┼────────────┐
-    ▼            ▼            ▼
-┌────────┐  ┌────────┐  ┌──────────┐
-│ PDF    │  │ Notion │  │ GHL      │
-│ Report │  │ DB     │  │ Update   │
-└────────┘  └────────┘  └──────────┘
-```
+### 📄 Core Documentation
 
-## Quick Start
+- **`GHL_Ad_Manager_ROAS_Setup.md`** - The Master Guide for setting up attribution.
+- **`Agency_Scaling_Strategy.md`** - Roadmap to "Top 10" status via AI & Reporting.
+- **`Attribution_Video_Analysis.md`** - Technical decision log (Native vs. GTM).
+- **`MEC_Workflow_Instructions.md`** - Step-by-step for current MEC implementation.
 
-1. **Import workflow**: `n8n_workflow_weekly_ads_report.json` → n8n
-2. **Create Notion databases**: See `notion_database_schemas.md`
-3. **Configure credentials**: See `SETUP_GUIDE.md`
-4. **Test with one client**
-5. **Enable weekly schedule**
+### 🤖 Automation (3-Layer Architecture)
 
-## Files
+The system uses a "Directives" and "Execution" model:
 
-### Workflows (Import to n8n)
+- **`/directives`** - Standard Operating Procedures (SOPs) in Markdown.
+  - `pull_ghl_contacts.md`
+  - `calculate_roas.md`
+  - `post_to_discord.md`
 
-| File | Purpose |
-|------|---------|
-| `n8n_workflow_weekly_ads_report.json` | Main weekly reporting workflow |
-| `n8n_workflow_ad_account_discovery.json` | Auto-discovers & maps ad accounts to clients |
+- **`/execution`** - Python scripts that do the work.
+  - `ghl_pull_contacts.py` - Fetches data & checks attribution.
+  - `ghl_create_custom_fields.py` - Automates field creation.
+  - `calculate_roas.py` - Merges Ad Spend + GHL Revenue.
 
-### Setup & Configuration
+### 🗄️ Archive
 
-| File | Purpose |
-|------|---------|
-| `SETUP_GUIDE.md` | Step-by-step setup instructions |
-| `notion_database_schemas.md` | Notion database property specs |
+- **`/_archive`** - Contains old research, n8n JSONs, and superseded guides.
 
-### Call Tracking
+## 🚀 Quick Start
 
-| File | Purpose |
-|------|---------|
-| `Call_Tracking_Options_For_Jake.md` | Decision doc: 4 options with trade-offs |
-| `Call_Tracking_Strategy.md` | Multi-channel tracking strategy |
-| `Phone_Number_Porting_Guide.md` | How to port numbers to GHL |
+1. **Check Task List:** See `task.md` for current progress.
+2. **Environment:** Ensure `.env` is configured with MEC credentials.
+3. **Run Reports:**
 
-### Reference & Planning
+    ```bash
+    python execution/calculate_roas.py
+    ```
 
-| File | Purpose |
-|------|---------|
-| `Executive_Summary_Weekly_Ads_System.md` | Overview for decision makers |
-| `Weekly_Ads_Reporting_System_Specification.md` | Full technical spec |
-| `Budget_Stack_Free_Alternatives.md` | Cost comparison and alternatives |
-| `Conversation_Summary_Dec22.md` | Session notes and decisions |
+## 🛠️ Current Status (MEC Pilot)
 
-## Stack (FREE)
-
-| Component | Tool | Cost |
-|-----------|------|------|
-| Automation | n8n (local) | $0 |
-| Data Pull | Direct APIs | $0 |
-| PDF Generation | Google Docs → PDF | $0 |
-| Storage | Google Drive | $0 |
-| Dashboard | Notion | $0 |
-| CRM | GoHighLevel | (existing) |
-| **Total** | | **$0/month** |
-
-## Project Status
-
-- [x] System architecture designed
-- [x] n8n workflow created (20+ nodes)
-- [x] Notion database schemas defined
-- [x] GHL configuration documented
-- [x] Setup guide written
-- [ ] API credentials configured
-- [ ] Notion databases created
-- [ ] Test with pilot client
-- [ ] Full rollout
-
-## License
-
-Proprietary - Internal Use Only
+- Integrations: ✅ Verified
+- Custom Fields: ✅ Created
+- Workflows: 🚧 In Progress (Manual Creation)
+- Phone Numbers: 🚧 Pending Purchase
