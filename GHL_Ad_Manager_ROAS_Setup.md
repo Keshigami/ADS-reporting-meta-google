@@ -10,6 +10,8 @@ Full instructions for setting up proper ad attribution and ROAS tracking in GoHi
 
 ### How Attribution Works
 
+> **Deep Dive:** [Understanding Attribution Source](https://help.gohighlevel.com/support/solutions/articles/48001219997-understanding-attribution-source)
+
 When someone clicks your ad:
 
 1. **Google Ads** adds `?gclid=xxx` to the URL
@@ -143,6 +145,56 @@ GHL forms automatically capture GCLID if the URL contains it. To verify:
 
 ---
 
+## Part 1.5: Enable Google Ad Reporting Dashboard
+
+Start seeing live Google Ad reporting directly inside GHL.
+
+### Step 1.5.1: Connect Google Account
+
+1. Go to **Settings → Integrations**.
+2. Connect your Google account (ensure it has admin/manager access to the Google Ads account).
+
+### Step 1.5.2: Configure Ad Account
+
+1. Go to **Reporting → Google Ads**.
+2. If prompted, select the correct **MCC Account ID** and **Client Account ID**.
+3. **Save**.
+
+> **Note:** We have already configured the UTM Tracking Template in Google Ads (completed for MEC).
+
+---
+
+## Part 1.8: Google Analytics 4 (GA4) Setup
+
+Setup GA4 to cross-verify traffic data.
+
+### Step 1.8.1: Get Measurement ID
+
+1. Go to **Google Analytics → Admin**.
+2. Select **Data Streams** → Web.
+3. Copy the **Measurement ID** (starts with `G-`).
+
+### Step 1.8.2: Install in GHL
+
+1. Go to **Sites → Settings**.
+2. Paste the GA4 Script in the **Head Tracking Code** section:
+
+```html
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+```
+
+*(Replace `G-XXXXXXXXXX` with your ID)*
+
+---
+
 ## Part 2: Meta Ads Attribution (fbclid + CAPI)
 
 ### What is fbclid?
@@ -189,6 +241,81 @@ Similar to GCLID, fbclid is Meta's click identifier. Combined with CAPI (Convers
 | **Currency** | `USD` |
 
 1. Click **Publish**
+
+---
+
+### Step 2.4: Install Browser Pixel Code (Required for Funnel Events)
+
+While CAPI (Step 2.3) handles "Closed" deals, you need the Browser Pixel to track "PageViews" and "Leads" on the frontend.
+
+1. **Meta Events Manager → Data Sources → Settings**.
+2. Click **Set up Meta Pixel**.
+3. Choose **Install code manually**.
+4. Copy the Base Code.
+5. In GHL: **Sites → Settings**.
+6. Paste into **Head Tracking Code**.
+7. **Save**.
+
+## Part 1.9: Google Ad Precautionary Tracking Script (Fail-Safe)
+
+*(Source: [How to set up Google Ad Precautionary Tracking Script](https://help.gohighlevel.com/support/solutions/articles/48001219356))*
+
+This script ensures clicks are tracked even if the UTM template fails or is stripped.
+
+1. **Google Ads > Tools & Settings > Bulk Actions > Scripts**.
+2. Create a new script, name it "GHL Fail-Safe Tracking".
+3. Paste the code below (Requires `lpurl` variable setup):
+    - *See full code in the source article or Appendix A.*
+
+---
+
+## Part 1.10: Offline Conversion Actions (The "Secret Weapon")
+
+*(Source: [How to set up Google Ad Conversion Actions](https://help.gohighlevel.com/support/solutions/articles/48001220947))*
+
+This sends "Offline" signals (like specific Form Submits or Chat Widget leads) back to Google Ads as conversions.
+
+1. **Google Ads**: Create "Import > Other data sources > Track conversions from clicks".
+2. **Category**: "Converted Lead".
+3. **GHL Workflow**:
+    - **Trigger**: Form Submitted / Chat Widget Replied.
+    - **Action**: "Add to Google Ads".
+    - **Conversion Action**: Select the one you just created.
+
+---
+
+## Part 3: Agency & Advanced Reporting
+
+### 3.1 Client Spend (Agency Only)
+
+*(Source: [How to add Client Spend](https://help.gohighlevel.com/support/solutions/articles/48001220946))*
+- **Purpose**: Show the client their Total Cost (Ad Spend + Your Management Fee).
+- **Where**: Agency View > Reporting Settings.
+
+### 3.2 Chat Widget Attribution
+
+*(Source: [Chat Widget Attribution](https://help.gohighlevel.com/support/solutions/articles/48001175057))*
+- **View**: Contact Detail > Activity Tab.
+- **Note**: Chat leads often come from "Direct" or "Organic" unless they clicked an ad immediately before chatting.
+
+---
+
+## Part 2.5: Enable Facebook Ad Reporting Dashboard
+
+Start seeing live Facebook Ad reporting directly inside GHL.
+
+### Step 2.5.1: Connect Facebook Account
+
+1. Go to **Settings → Integrations**.
+2. Connect your Facebook account (ensure it has admin access to the Page and Ad Account).
+
+### Step 2.5.2: Configure Ad Account
+
+1. Go to **Reporting → Facebook Ads**.
+2. Select the correct **Ad Account ID** from the dropdown.
+3. **Save**.
+
+> **Note:** The Pixel & CAPI setup (Part 2) feeds data into this dashboard to verify conversions.
 
 ---
 

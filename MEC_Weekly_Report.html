@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Performance Report</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* RESET & BASICS */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0a0a0a;
+            font-family: 'Montserrat', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        /* BRAND COLORS */
+        /* Gold: #E4AE7C | Dark: #0a0a0a | Card: #141414 | Text: #F0F0F0 */
+
+        /* CONTAINER */
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #0a0a0a;
+            padding-bottom: 40px;
+        }
+
+        .main-content {
+            background-color: #0a0a0a;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 600px;
+            color: #F0F0F0;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 30px 0;
+            text-align: center;
+            border-bottom: 2px solid #E4AE7C;
+        }
+
+        .logo {
+            max-height: 40px;
+        }
+
+        /* HERO */
+        .hero {
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            text-transform: uppercase;
+            margin: 0 0 10px 0;
+            letter-spacing: 1px;
+        }
+
+        .hero h1 span {
+            color: #E4AE7C;
+        }
+
+        .hero p {
+            font-size: 16px;
+            color: #A0A0A0;
+            margin: 0;
+        }
+
+        /* METRIC CARDS - GRID SYSTEM */
+        .metrics-grid td {
+            padding: 5px;
+            width: 50%;
+            vertical-align: top;
+        }
+
+        .metric-card {
+            background-color: #141414;
+            border: 1px solid #222;
+            border-left: 3px solid #E4AE7C;
+            /* Balanced Padding: Left (3px border + 15px pad = 18px) | Right (1px border + 17px pad = 18px) */
+            padding: 15px 17px 15px 15px;
+            text-align: center;
+            border-radius: 4px;
+            height: 100%;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 8px 0 4px 0;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #A0A0A0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            color: #4ade80;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .trend-down {
+            color: #f87171;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .trend-neutral {
+            color: #e4ae7c;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        /* SECTION TITLE */
+        .section-title {
+            text-align: left;
+            color: #E4AE7C;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 20px 5px 10px 5px;
+            letter-spacing: 1px;
+        }
+
+        .badge-2026 {
+            background: rgba(228, 174, 124, 0.1);
+            color: #E4AE7C;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            margin-left: 5px;
+        }
+
+        .badge-ai {
+            background: rgba(147, 51, 234, 0.1);
+            color: #a855f7;
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            text-transform: uppercase;
+            margin-left: 5px;
+            border: 1px solid rgba(147, 51, 234, 0.3);
+        }
+
+        /* INSIGHT SECTION */
+        .insight-box {
+            background-color: #1a1a1a;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 4px;
+            border-top: 1px solid #333;
+        }
+
+        .insight-title {
+            color: #E4AE7C;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .insight-text {
+            color: #cccccc;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* AI RECOMMENDER SECTION */
+        .ai-rec-box {
+            background: linear-gradient(145deg, #141414, #1a1a1a);
+            margin: 0 5px;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #333;
+            border-left: 3px solid #a855f7;
+            /* AI Purple */
+        }
+
+        .ai-rec-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .ai-rec-icon {
+            color: #a855f7;
+            margin-right: 8px;
+            font-size: 16px;
+        }
+
+        .ai-rec-body {
+            color: #ccc;
+            font-size: 12px;
+            line-height: 1.5;
+            font-style: italic;
+        }
+
+        /* FOOTER */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #555555;
+            font-size: 12px;
+            border-top: 1px solid #222;
+            margin-top: 30px;
+        }
+
+        .footer a {
+            color: #777;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <center class="wrapper">
+        <div class="main-content">
+
+            <!-- HEADER -->
+            <table class="header">
+                <tr>
+                    <td>
+                        <img src="https://bannermountainmedia.com/wp-content/uploads/2021/11/logo-min.png"
+                            alt="Banner Mountain Media" class="logo">
+                    </td>
+                </tr>
+            </table>
+
+            <!-- HERO -->
+            <div class="hero">
+                <h1>Weekly <span>Performance</span> Report</h1>
+                <p>July 14 - July 21, 2026</p>
+                <p style="margin-top:10px; color:#fff;">Hi <strong>MEC Team</strong>, here is your
+                    marketing snapshot.</p>
+            </div>
+
+            <!-- PRIMARY METRICS (TRUE PROFITABILITY) -->
+            <div class="section-title">01 / True Profitability <span class="badge-2026">2026 Std</span></div>
+            <table class="metrics-grid">
+                <tr>
+                    <!-- POAS (THE NEW KING) -->
+                    <td>
+                        <div class="metric-card" style="border-left: 3px solid #4ade80;">
+                            <div class="metric-label">POAS (Profit/Ad Spend)</div>
+                            <div class="metric-value">{{metrics.poas}}x</div>
+                            <div class="trend-up">▲ True Efficiency</div>
+                        </div>
+                    </td>
+                    <!-- NET PROFIT -->
+                    <td>
+                        <div class="metric-card" style="border-left: 3px solid #4ade80;">
+                            <div class="metric-label">Est. Net Profit</div>
+                            <div class="metric-value">{{metrics.net_profit}}</div>
+                            <div class="trend-up">{{metrics.profit_trend}}</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- SECONDARY METRICS (PLATFORM HEALTH) -->
+            <div class="section-title">02 / Platform Health</div>
+            <table class="metrics-grid">
+                <tr>
+                    <!-- TOTAL LEADS -->
+                    <td>
+                        <div class="metric-card" style="border-left: 1px solid #333;">
+                            <div class="metric-label" style="color:#777;">Total Leads</div>
+                            <div class="metric-value" style="font-size:20px;">{{metrics.total_leads}}</div>
+                            <div class="metric-label" style="font-size:10px;">{{leads_trend}}</div>
+                        </div>
+                    </td>
+                    <!-- CPL -->
+                    <td>
+                        <div class="metric-card" style="border-left: 1px solid #333;">
+                            <div class="metric-label" style="color:#777;">Cost Per Lead</div>
+                            <div class="metric-value" style="font-size:20px;">{{metrics.cpl}}</div>
+                            <div class="metric-label" style="font-size:10px;">{{cpl_trend}}</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- SECTION 3: AI LEAD LAB (NEW) -->
+            <div class="section-title">03 / AI Lead Intelligence <span class="badge-ai">Agent Analysis</span></div>
+
+            <table class="metrics-grid">
+                <tr>
+                    <!-- RESPONSE TIME -->
+                    <td>
+                        <div class="metric-card" style="border-left: 3px solid #a855f7;">
+                            <div class="metric-label" style="color:#a855f7;">Avg Response Time</div>
+                            <div class="metric-value">{{lead_interaction.avg_response_time_minutes}} min</div>
+                            <div class="trend-up">Grade: {{lead_interaction.response_time_grade}}</div>
+                        </div>
+                    </td>
+                    <!-- SENTIMENT SCORE -->
+                    <td>
+                        <div class="metric-card" style="border-left: 3px solid #a855f7;">
+                            <div class="metric-label" style="color:#a855f7;">Sentiment Score</div>
+                            <div class="metric-value">{{lead_interaction.lead_sentiment_score}}/10</div>
+                            <div class="trend-neutral">High Intent</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- AI RECOMMENDATION BOX -->
+            <div class="ai-rec-box">
+                <div class="ai-rec-header">
+                    <span class="ai-rec-icon">⚡</span>
+                    <span style="color:#fff; font-size:12px; font-weight:700;">AI OPTIMIZATION DETECTED</span>
+                </div>
+                <div class="ai-rec-body">
+                    "<strong>Top Objection Detected:</strong> '{{lead_interaction.top_objection}}'.<br><br>
+                    <strong>Action:</strong> {{lead_interaction.ai_recommendation}}"
+                </div>
+            </div>
+
+            <!-- STRATEGIC INSIGHT -->
+            <div class="insight-box">
+                <div class="insight-title">⚡ Weekly Strategy</div>
+                <p class="insight-text">
+                    "We are prioritizing <strong>Profitability (POAS)</strong>. With a 4-minute response time, your team
+                    is closing at a high rate. The AI suggests tweaking our SMS to handle 'Trip Charge' questions
+                    upfront to boost conversion even further."
+                </p>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="footer">
+                <p>&copy; 2026 Banner Mountain Media, LLC</p>
+                <p>Strategy is the Blueprint.</p>
+                <p><a href="#">View Live Dashboard</a></p>
+            </div>
+
+        </div>
+    </center>
+
+</body>
+
+</html>

@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Tracking Guide | Banner Mountain Media</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            /* Brand Palette */
+            --brand-gold: #E4AE7C;
+            --brand-gold-muted: #c99362;
+            --brand-dark: #0a0a0a;
+            --brand-panel: #141414;
+            --brand-text: #F0F0F0;
+            --brand-text-muted: #A0A0A0;
+
+            /* Aesthetics */
+            --f-primary: 'Montserrat', sans-serif;
+            --f-display: 'Playfair Display', serif;
+            /* Minera substitute */
+        }
+
+        body {
+            font-family: var(--f-primary);
+            background-color: var(--brand-dark);
+            color: var(--brand-text);
+            margin: 0;
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* -----------------------
+           Header & Branding
+           ----------------------- */
+        header {
+            background-color: var(--brand-dark);
+            padding: 25px 0;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            border-bottom: 1px solid rgba(228, 174, 124, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 30px;
+        }
+
+        .logo {
+            max-height: 45px;
+            display: block;
+        }
+
+        /* -----------------------
+           Cinematic Hero
+           ----------------------- */
+        .hero {
+            background: linear-gradient(180deg, var(--brand-dark) 0%, #1a1a1a 100%);
+            text-align: left;
+            padding: 100px 30px;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid rgba(228, 174, 124, 0.2);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--brand-gold), transparent);
+        }
+
+        .hero h1 {
+            font-family: var(--f-primary);
+            font-weight: 700;
+            font-size: 3.5rem;
+            color: var(--brand-text);
+            margin: 0 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .hero h1 span {
+            color: var(--brand-gold);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--brand-text-muted);
+            max-width: 700px;
+            margin: 0;
+            font-weight: 300;
+        }
+
+        /* -----------------------
+           Typography & Content
+           ----------------------- */
+        .content {
+            padding: 60px 0;
+        }
+
+        h2 {
+            font-family: var(--f-primary);
+            color: var(--brand-gold);
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-top: 80px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        h2::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, #333, transparent);
+        }
+
+        h3 {
+            font-family: var(--f-primary);
+            color: #fff;
+            font-size: 1.4rem;
+            margin-top: 50px;
+            margin-bottom: 15px;
+            font-weight: 500;
+            border-left: 3px solid var(--brand-gold);
+            padding-left: 15px;
+        }
+
+        p,
+        li {
+            color: var(--brand-text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        strong {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* -----------------------
+           Cards & Elements
+           ----------------------- */
+        .intro-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid var(--brand-gold);
+            padding: 30px;
+            margin-bottom: 50px;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .code-block {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'COPY & PASTE';
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            background: var(--brand-gold);
+            color: #000;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 2px;
+        }
+
+        code {
+            font-family: 'Consolas', monospace;
+            color: var(--brand-gold);
+            font-size: 0.95rem;
+        }
+
+        /* Fix for overflow */
+        pre {
+            white-space: pre-wrap;
+            /* css-3 */
+            white-space: -moz-pre-wrap;
+            /* Mozilla, since 1999 */
+            white-space: -pre-wrap;
+            /* Opera 4-6 */
+            white-space: -o-pre-wrap;
+            /* Opera 7 */
+            word-wrap: break-word;
+            /* Internet Explorer 5.5+ */
+            margin: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            background: var(--brand-panel);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        th {
+            background: #222;
+            color: var(--brand-gold);
+            text-align: left;
+            padding: 15px 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #222;
+        }
+
+        img.guide-img {
+            max-width: 100%;
+            border-radius: 4px;
+            border: 1px solid #333;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            margin: 25px 0 40px 0;
+            transition: transform 0.3s ease;
+        }
+
+        img.guide-img:hover {
+            border-color: var(--brand-gold);
+        }
+
+        .alert {
+            background: rgba(200, 50, 50, 0.1);
+            border: 1px solid rgba(200, 50, 50, 0.3);
+            color: #ffaaaa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* -----------------------
+           Footer
+           ----------------------- */
+        footer {
+            border-top: 1px solid #222;
+            text-align: center;
+            padding: 50px;
+            margin-top: 100px;
+            color: #555;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <img src="https://bannermountainmedia.com/wp-content/uploads/2021/11/logo-min.png"
+                alt="Banner Mountain Media" class="logo">
+        </div>
+    </header>
+
+    <div class="hero">
+        <div class="container">
+            <h1>Ultimate <span>Tracking</span> & Attribution Guide</h1>
+            <p>Strategy is the Blueprint. This is the technical execution.</p>
+        </div>
+    </div>
+
+    <div class="container content">
+
+        <div class="intro-card">
+            <p style="margin:0; font-size: 1.2rem; color: #fff;">
+                <strong>Objective:</strong> Consolidate all tracking protocols into one workflow. Follow these steps to
+                ensure every dollar spent in Google and Meta is accurately tracked to a Lead and Sale in HighLevel.
+            </p>
+        </div>
+
+        <!-- PHASE 1 -->
+        <h2>01 / The Foundation</h2>
+        <p>Before connecting ads, you must understand <em>how</em> the platform attributes revenue.</p>
+
+        <h3>First vs. Latest Attribution</h3>
+        <ul>
+            <li><strong>First Attribution:</strong> The verified <em>first</em> interaction (e.g., SEO visit 6 months
+                ago). Never changes.</li>
+            <li><strong>Latest Attribution:</strong> The <em>most recent</em> interaction (e.g., Facebook Ad click
+                yesterday). Updates constantly.</li>
+        </ul>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/155015178854/original/LaAFs5bfFxyo0Su56GWkBEkyyD7o2l6oQA.png?1702496706"
+            alt="First and Latest Attribution" class="guide-img">
+
+        <h3>Where to Find It</h3>
+        <p>Go to <strong>Contacts > Select Contact > Scroll to Activity (Bottom Right)</strong>.</p>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/48247964170/original/VSgXZHb-pBWW3cGC7emsU4xKKLFyaKQJ3g.gif?1661800754"
+            alt="Locating Attribution Data" class="guide-img">
+
+        <!-- PHASE 2 -->
+        <h2>02 / Google Ads Setup</h2>
+
+        <h3>2.1 Connect the Account</h3>
+        <ol>
+            <li>Go to <strong>Settings > Integrations</strong>.</li>
+            <li>Connect your Google Account (Must have Admin access).</li>
+            <li>Go to <strong>Reporting > Google Ads Settings</strong>.</li>
+            <li>Select your <strong>MCC Account</strong> (if applicable) and <strong>Client Account</strong>.</li>
+        </ol>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/48241724794/original/41FtCevRGsKvW2aJupKjPEfYRnjb_h9fcA.png?1659031996"
+            alt="Google Ads Integration" class="guide-img">
+
+        <div class="alert">
+            <strong>⚠️ Troubleshooting:</strong> Ensure the user has "Admin" access in Google Ads and "User" or "Admin"
+            access in GHL. Manager roles can cause disconnects.
+        </div>
+
+        <h3>2.2 Install the Tracking Template (CRITICAL)</h3>
+        <p>For Google Ads to "talk" to the CRM, you must use this specific UTM template. This is the bridge between ad
+            spend and revenue.</p>
+
+        <div class="code-block">
+            <pre><code>{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={campaignname}&utm_content={adgroupname}&utm_term={keyword}&campaign_id={campaignid}&ad_group_id={adgroupid}&ad_id={creative}</code></pre>
+        </div>
+
+        <p><strong>Where to Paste It:</strong></p>
+        <ul>
+            <li><strong>Google Ads > Settings > Account Settings > Tracking</strong>.</li>
+            <li>Paste into "Tracking template".</li>
+        </ul>
+
+        <h3>2.3 Enable Auto-Tagging</h3>
+        <p>Go to <strong>Google Ads > Settings > Account Settings > Auto-tagging</strong> and ensure it is
+            <strong>ON</strong>. This automatically appends the <code>gclid</code> to URLs for Enhanced Conversions.
+        </p>
+
+        <h3>2.4 The "Fail-Safe" Script (Optional)</h3>
+        <p>Ensure 100% data capture even if UTMs fail. Go to <strong>Google Ads > Tools > Scripts</strong> and create
+            "GHL Fail-Safe".</p>
+
+        <!-- PHASE 3 -->
+        <h2>03 / Facebook Ads Setup</h2>
+
+        <h3>3.1 Connect & Enable</h3>
+        <ol>
+            <li>Go to <strong>Settings > Integrations > Connect Facebook</strong>.</li>
+            <li>Go to <strong>Reporting > Facebook Ads Settings</strong>.</li>
+            <li>Select the correct Ad Account.</li>
+        </ol>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/48261752780/original/KL8jbKqo5KzHh_3uSbiTvx0kcQ6nTuYmrQ.png?1667831557"
+            alt="Facebook Integration Settings" class="guide-img">
+
+        <h3>3.2 Paid Social Parameters</h3>
+        <div class="code-block">
+            <pre><code>utm_source=facebook&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}&utm_term={{adset.name}}&campaign_id={{campaign.id}}</code></pre>
+        </div>
+        <p><strong>Where to Paste It:</strong> Url Parameters field at the Ad Level.</p>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/48173301734/original/RKnA2Zuqw5UV4fyM_U3CSt4L6gkkNmCJHw.png?1640200443"
+            alt="Facebook UTM Builder" class="guide-img">
+
+        <!-- PHASE 4 (NEW) -->
+        <h2>04 / Advanced Tracking (GA4)</h2>
+        <p>While GHL has its own reporting, Google Analytics 4 (GA4) is the verified "Source of Truth" for traffic.</p>
+
+        <h3>4.1 Tracking Funnel Pageviews in GA4</h3>
+        <ol>
+            <li>In GA4, go to <strong>Admin > Property Settings > Data Streams</strong>.</li>
+            <li>Copy the <strong>Global Site Tag (G-XXXXXXXX)</strong>.</li>
+            <li>In GHL, paste this into <strong>Funnel Settings > Head Tracking Code</strong>.</li>
+        </ol>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/48248397407/original/pdNNp3rYDDYl3DFcfJtnTLXZSLMd7b2Nng.png?1661959750"
+            alt="GA4 Data Stream" class="guide-img">
+
+        <h3>4.2 Sending Workflow Data to GA4</h3>
+        <p>You can send "Offline" events (like a manually added lead) to GA4 via Workflows.</p>
+        <ol>
+            <li>Create a Workflow > Add Action: <strong>"Google Analytics"</strong>.</li>
+            <li>Enter your <strong>Tracking ID</strong>.</li>
+            <li>Define Event Category (e.g., "Lead"), Action, and Label.</li>
+        </ol>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/48255298205/original/JWpX4aSQucOUmvCdoyaTbe1uTLj9BAn9vw.jpeg?1665087756"
+            alt="GA4 Workflow Action" class="guide-img">
+
+        <!-- PHASE 5 (EXPANDED) -->
+        <h2>05 / Reporting & Analysis</h2>
+
+        <h3>5.1 The Command Center</h3>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/48249248484/original/BVS_7NnRNEQp3b4qJgSWEcs3kymdNOhDkw.png?1662394187"
+            alt="Google Ads Dashboard" class="guide-img">
+
+        <h3>5.2 Internal Performance Metrics</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Report Type</th>
+                    <th>Purpose</th>
+                    <th>Key Metric</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Call Reporting</strong></td>
+                    <td>See which channels drive phone calls.</td>
+                    <td>Call Duration & Source</td>
+                </tr>
+                <tr>
+                    <td><strong>Appointment Report</strong></td>
+                    <td>Track booking volume by source.</td>
+                    <td>Confirmations / Cancellations</td>
+                </tr>
+                <tr>
+                    <td><strong>Sales Velocity</strong></td>
+                    <td>How fast you turn Leads into Cash.</td>
+                    <td>Formula: (Sales $ / Cycle Time)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- INTERNAL REPORTING IMAGES -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <p><strong>Call Reporting:</strong></p>
+                <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/155028290602/original/g__VPM7LgQaeKckHhaJskvxN3HfTBJBWJA.png?1719463921"
+                    alt="Call Reporting" class="guide-img">
+            </div>
+            <div>
+                <p><strong>Appointment Reporting:</strong></p>
+                <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/155045833666/original/IWozw0yYbxnJAX7OphOK_2A_WXKoyedpqQ.png?1745925358"
+                    alt="Appointment Reporting" class="guide-img">
+            </div>
+        </div>
+
+        <h3>5.3 Geographic Analytics</h3>
+        <p>Use the <strong>Heat Map</strong> to see exactly which cities are generating leads, then adjust your ad
+            targeting to exclude low-performing zip codes.</p>
+        <img src="https://s3.amazonaws.com/cdn.freshdesk.com/data/helpdesk/attachments/production/155054958863/original/4d5vm1E2Ikj3ekdrF4v0nqCphxTJGRF0_A.png?1759253656"
+            alt="Geo Analytics" class="guide-img">
+
+        <!-- PHASE 6 -->
+        <h2>06 / Advanced Optimization</h2>
+
+        <h3>Conversion Workflows (Server-Side Tracking)</h3>
+        <p>Create these 4 workflows to send conversion data back to Google and Meta for ROAS calculation:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Workflow Name</th>
+                    <th>Trigger</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Google Ads - Track Lead</td>
+                    <td>Contact Created</td>
+                    <td>Add to Google AdWords (Lead)</td>
+                </tr>
+                <tr>
+                    <td>Google Ads - Track Closed Won</td>
+                    <td>Pipeline → Closed</td>
+                    <td>Add to Google AdWords (Closed Won)</td>
+                </tr>
+                <tr>
+                    <td>Meta Ads - Track Lead</td>
+                    <td>Contact Created</td>
+                    <td>Facebook CAPI (Lead)</td>
+                </tr>
+                <tr>
+                    <td>Meta Ads - Track Purchase</td>
+                    <td>Pipeline → Closed</td>
+                    <td>Facebook CAPI (Purchase)</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="alert">
+            <strong>⚠️ Critical:</strong> For Revenue to work, every closed opportunity MUST have a monetary value set!
+        </div>
+
+
+        <h3>Call Tracking Setup</h3>
+        <p>Use <strong>both methods</strong> for complete coverage.</p>
+
+        <h4>Option A: Static Tracking Numbers (For Ads)</h4>
+        <p><strong>Path:</strong> <code>Settings > Phone Numbers > Buy Number</code></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Channel</th>
+                    <th>Number Label</th>
+                    <th>Where to Use</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Google Ads</td>
+                    <td><code>CLIENT-GOOGLE</code></td>
+                    <td>Google call extensions, search ads</td>
+                </tr>
+                <tr>
+                    <td>Meta Ads</td>
+                    <td><code>CLIENT-META</code></td>
+                    <td>Facebook/Instagram ad creatives</td>
+                </tr>
+                <tr>
+                    <td>LSA</td>
+                    <td><code>CLIENT-LSA</code></td>
+                    <td>Local Service Ads profile</td>
+                </tr>
+                <tr>
+                    <td>Organic</td>
+                    <td><code>CLIENT-ORGANIC</code></td>
+                    <td>GMB, website footer, direct</td>
+                </tr>
+            </tbody>
+        </table>
+        <p><em>Cost: ~$6-8/month (3-4 numbers × $2/each)</em></p>
+
+        <h4>Option B: Number Pools (Dynamic Website Tracking)</h4>
+        <p>Number Pools use Dynamic Number Insertion (DNI) to swap phone numbers at the visitor level for
+            <strong>keyword-level call attribution</strong>.
+        </p>
+
+        <p><strong>Path:</strong> <code>Settings > Phone Numbers > Number Pool > Add Number Pool</code></p>
+        <ol>
+            <li><strong>Tracking Type:</strong> Select "Visitors Activity"</li>
+            <li><strong>Pool Size:</strong> Minimum 4 numbers</li>
+            <li><strong>Forwarding Number:</strong> Client's main business line</li>
+            <li><strong>Swapping Number:</strong> Number displayed on website</li>
+        </ol>
+        <p>After creating the pool, click <strong>Get Code</strong> and paste the snippet into <strong>Footer Tracking
+                Code</strong> of your funnel.</p>
+
+        <div class="alert">
+            <strong>⚠️ Important:</strong> The swap script must be in the Footer (body), not the Header. Test in
+            incognito browser to verify swapping works.
+        </div>
+
+        <h3>External Site Tracking (WordPress/Wix)</h3>
+        <p>For clients with external websites, install the GHL tracking script:</p>
+        <p><strong>Path:</strong> <code>Settings > Business Profile > Tracking Code</code></p>
+        <ol>
+            <li><strong>WordPress:</strong> Install "Insert Headers and Footers" (WPCode) plugin</li>
+            <li>Paste GHL tracking script in Header section</li>
+            <li>Save changes</li>
+        </ol>
+
+        <h3>Trigger Links (Email/SMS Attribution)</h3>
+        <p>Track clicks in emails and SMS with automated workflow triggers:</p>
+        <p><strong>Path:</strong> <code>Marketing > Trigger Links > + Create</code></p>
+        <ol>
+            <li>Create trigger link with destination URL</li>
+            <li>Insert in email/SMS campaigns</li>
+            <li>Create workflow with "Trigger Link Clicked" trigger</li>
+        </ol>
+
+        <h3>Email Tracking Setup</h3>
+        <p><strong>Path:</strong> <code>Settings > Email Services > Dedicated Domain</code></p>
+        <ol>
+            <li>Add dedicated sending domain (e.g., mail.clientdomain.com)</li>
+            <li>Configure DNS: SPF, DKIM, DMARC</li>
+            <li>Enable Click & Open Tracking</li>
+        </ol>
+
+        <h3>Offline Conversions (The Feedback Loop)</h3>
+        <ol>
+            <li><strong>Google Ads:</strong> Create Conversion Action "Import from Clicks".</li>
+            <li><strong>Workflow:</strong> Trigger "Form Submit" -> Action "Add to Google Analytics/Ads".</li>
+        </ol>
+
+        <h3>Client Spend Markup</h3>
+        <p><strong>Agency Settings > Reporting > Client Spend Markup.</strong> Hides raw costs and displays (Ad Spend +
+            Management Fee) to the client.</p>
+
+        <h2 style="margin-top: 80px; border:none; padding-bottom: 0;">Appendix A: Fail-Safe Script</h2>
+        <div class="code-block" style="margin-top: 10px;">
+            <pre><code>function main() {
+  var TrackingTemplate = "{lpurl}?utm_source=google&utm_medium=cpc&utm_campaign={CampaignName}&utm_content={AdGroupName}&utm_term={keyword}&campaign_id={campaignid}&ad_group_id={adgroupid}&ad_id={creative}";
+  var _CAMPAIGN_CONTAINS = "";
+  var _ADGROUP_CONTAINS = "";
+  var STATUS = "ENABLED";
+  // ... (Full script available in GHL Knowledge Base)
+}</code></pre>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Banner Mountain Media, LLC<br>Video Strategy • Marketing • Media Production</p>
+    </footer>
+
+</body>
+
+</html>

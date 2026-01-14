@@ -1,0 +1,48 @@
+{
+  "client_info": {
+    "name": "MEC (Mountain Electric Co)",
+    "industry": "Local Services",
+    "cycle_stage": "Scaling"
+  },
+  "reporting_period": {
+    "start_date": "2026-07-14",
+    "end_date": "2026-07-21"
+  },
+  "metrics": {
+    "poas": 6.5,
+    "net_profit": "$5,100",
+    "profit_trend": "▲ 15% (True Growth)",
+    "roas": 16.3,
+    "revenue": "$8,500",
+    "total_leads": 18,
+    "leads_trend": "▲ 20% vs last week",
+    "cpl": "$28.88",
+    "cpl_trend": "▼ 12.5% (Improved)",
+    "total_spend": "$520",
+    "ctr": 2.4,
+    "cpc": "$1.85",
+    "conversion_rate": 8.5
+  },
+  "lead_interaction_insights": {
+    "avg_response_time_minutes": 4,
+    "response_time_grade": "A+",
+    "lead_sentiment_score": 9.2,
+    "sentiment_summary": "High urgency detected. 70% of messages contain 'emergency' or 'now'.",
+    "top_objection": "Trip Charge / Call-out Fee",
+    "ai_recommendation": "Test mentioning '$0 Call-out with Repair' in the initial SMS to overcome the fee objection."
+  },
+  "channel_performance": {
+    "google": {
+      "spend": 520.00,
+      "leads": 18,
+      "cpl": 28.88,
+      "roas": 16.3,
+      "poas": 6.5,
+      "ctr": 2.4
+    }
+  },
+  "previous_period_comparison": {
+    "profit_change_percent": 15.0,
+    "leads_change_percent": 20.0
+  }
+}
